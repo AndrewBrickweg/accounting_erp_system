@@ -1,0 +1,219 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id           Int           @id @default(autoincrement())
+  name         String
+  managerId    Int?          @unique
+  code         String        @unique
+  employees    Employee[]
+  invoices     Invoice[]
+  glCodings    GLCoding[]
+  journalLines JournalLine[]
+}
+
+model Employee {
+  id           Int        @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  email        String     @unique
+  role         String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId Int
+
+  uploadedDocuments        Document[]           @relation("UploadedBy")
+  submittedInvoices        Invoice[]            @relation("SubmittedBy")
+  payments                 Payment[]
+  approvals                InvoiceApprovalLog[]
+  journalEntries           JournalEntry[]
+  completedReconciliations BankReconciliation[] @relation("CompletedBy")
+
+  submittedSalesInvoices SalesInvoice[] @relation("SubmittedSalesInvoices")
+}
+
+model Vendor {
+  id          Int       @id @default(autoincrement())
+  name        String
+  contactName String
+  email       String
+  phone       String
+  address     String
+  invoices    Invoice[]
+}
+
+model Invoice {
+  id            Int                  @id @default(autoincrement())
+  invoiceNumber String               @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  totalAmount   Float
+  status        String
+  vendor        Vendor               @relation(fields: [vendorId], references: [id])
+  vendorId      Int
+  submittedBy   Employee             @relation("SubmittedBy", fields: [submittedById], references: [id])
+  submittedById Int
+  department    Department           @relation(fields: [departmentId], references: [id])
+  departmentId  Int
+  glCodings     GLCoding[]
+  documents     Document[]
+  payments      Payment[]
+  approvals     InvoiceApprovalLog[]
+}
+
+model GLCoding {
+  id           Int             @id @default(autoincrement())
+  account      ChartOfAccounts @relation(fields: [accountId], references: [id])
+  accountId    Int
+  description  String
+  amount       Float
+  invoice      Invoice         @relation(fields: [invoiceId], references: [id])
+  invoiceId    Int
+  department   Department      @relation(fields: [departmentId], references: [id])
+  departmentId Int
+}
+
+model Document {
+  id           Int      @id @default(autoincrement())
+  fileName     String
+  fileUrl      String
+  uploadDate   DateTime
+  invoice      Invoice? @relation(fields: [invoiceId], references: [id])
+  invoiceId    Int?
+  uploadedBy   Employee @relation("UploadedBy", fields: [uploadedById], references: [id])
+  uploadedById Int
+}
+
+model Payment {
+  id          Int      @id @default(autoincrement())
+  amountPaid  Float
+  paymentDate DateTime
+  method      String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId   Int
+  paidBy      Employee @relation(fields: [paidById], references: [id])
+  paidById    Int
+}
+
+model InvoiceApprovalLog {
+  id            Int      @id @default(autoincrement())
+  approvalOrder Int
+  approvalDate  DateTime
+  status        String
+  comments      String?
+  createdAt     DateTime @default(now())
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId     Int
+  approvedBy    Employee @relation(fields: [approvedById], references: [id])
+  approvedById  Int
+}
+
+model ChartOfAccounts {
+  id            Int           @id @default(autoincrement())
+  accountNumber String        @unique
+  name          String
+  type          String // Asset, Liability, Equity, Revenue, Expense
+  isActive      Boolean       @default(true)
+  glCodings     GLCoding[]
+  journalLines  JournalLine[]
+}
+
+model JournalEntry {
+  id          Int               @id @default(autoincrement())
+  entryDate   DateTime
+  memo        String?
+  createdBy   Employee          @relation(fields: [createdById], references: [id])
+  createdById Int
+  lines       JournalLine[]
+  period      AccountingPeriod? @relation(fields: [periodId], references: [id])
+  periodId    Int?
+}
+
+model JournalLine {
+  id             Int             @id @default(autoincrement())
+  journalEntry   JournalEntry    @relation(fields: [journalEntryId], references: [id])
+  journalEntryId Int
+  account        ChartOfAccounts @relation(fields: [accountId], references: [id])
+  accountId      Int
+  department     Department      @relation(fields: [departmentId], references: [id])
+  departmentId   Int
+  amount         Float
+  isDebit        Boolean
+}
+
+model Customer {
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String
+  phone         String
+  address       String
+  salesInvoices SalesInvoice[]
+}
+
+model SalesInvoice {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String   @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  totalAmount   Float
+  status        String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  customerId    Int
+
+  submittedBy   Employee @relation("SubmittedSalesInvoices", fields: [submittedById], references: [id])
+  submittedById Int
+}
+
+model BankAccount {
+  id              Int                  @id @default(autoincrement())
+  name            String
+  accountNumber   String
+  bankName        String
+  balance         Float
+  transactions    BankTransaction[]
+  reconciliations BankReconciliation[]
+}
+
+model BankTransaction {
+  id              Int         @id @default(autoincrement())
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+  bankAccountId   Int
+  transactionDate DateTime
+  description     String
+  amount          Float
+  isDeposit       Boolean
+}
+
+model BankReconciliation {
+  id                 Int         @id @default(autoincrement())
+  bankAccount        BankAccount @relation(fields: [bankAccountId], references: [id])
+  bankAccountId      Int
+  statementStartDate DateTime
+  statementEndDate   DateTime
+  reconciledBalance  Float
+  completedBy        Employee    @relation("CompletedBy", fields: [completedById], references: [id])
+  completedById      Int
+  completedAt        DateTime
+}
+
+model AccountingPeriod {
+  id             Int            @id @default(autoincrement())
+  periodName     String // e.g., "Jul 2025"
+  startDate      DateTime
+  endDate        DateTime
+  isClosed       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  journalEntries JournalEntry[]
+}
