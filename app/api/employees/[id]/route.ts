@@ -6,6 +6,7 @@ import {
   updateEmployee,
   deleteEmployee,
 } from "@/lib/employee";
+import { handleError } from "@/lib/errors";
 
 export async function GET(
   request: Request,
@@ -15,13 +16,13 @@ export async function GET(
     const employee = await getEmployeeById(parseInt(params.id));
 
     if (!employee) {
-      return new Response("Employee not found", { status: 404 });
+      return handleError("Employee not found", 404);
     }
 
     return NextResponse.json(employee);
   } catch (error) {
     console.error("Error fetching employee:", error);
-    return new Response("Internal Server Error", { status: 500 });
+    return handleError("Internal Server Error", 500);
   }
 }
 
@@ -34,9 +35,8 @@ export async function PUT(
     const validation = validateSchema(body, employeeSchema);
 
     if (!validation.success) {
-      return new NextResponse(JSON.stringify({ errors: validation.errors }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
+      return handleError("Validation failed", 400, {
+        errors: validation.errors,
       });
     }
 
@@ -51,10 +51,9 @@ export async function PUT(
     return NextResponse.json(updatedEmployee);
   } catch (error) {
     console.error("Error updating employee:", error);
-    return new Response("Internal Server Error", { status: 500 });
+    return handleError("Internal Server Error", 500);
   }
 }
-
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -63,12 +62,12 @@ export async function DELETE(
     const employee = await deleteEmployee(parseInt(params.id));
 
     if (!employee) {
-      return new Response("Employee not found", { status: 404 });
+      return handleError("Employee not found", 404);
     }
 
     return NextResponse.json(employee);
   } catch (error) {
     console.error("Error deleting employee:", error);
-    return new Response("Internal Server Error", { status: 500 });
+    return handleError("Internal Server Error", 500);
   }
 }

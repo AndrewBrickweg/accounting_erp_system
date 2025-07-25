@@ -13,5 +13,32 @@ export const employeeSchema = z.object({
 
 export const employeeUpdateSchema = employeeSchema.partial();
 
+export const employeeListSchema = z.array(
+  z.object({
+    id: z.number(),
+    firstName: z.string(),
+    lastName: z.string(),
+    role: z.string(),
+    department: z.object({
+      name: z.string(), // assuming JOIN to get department name
+    }),
+  })
+);
+
+export const employeeDetailSchema = z.object({
+  id: z.number(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string(),
+  role: z.enum(["admin", "manager", "staff"]),
+  departmentId: z.number().int().positive(),
+  department: z.object({
+    id: z.number(),
+    name: z.string(),
+  }),
+});
+
 export type EmployeeInput = z.infer<typeof employeeSchema>;
 export type EmployeeUpdateInput = z.infer<typeof employeeUpdateSchema>;
+export type EmployeeList = z.infer<typeof employeeListSchema>;
+export type EmployeeDetail = z.infer<typeof employeeDetailSchema>;

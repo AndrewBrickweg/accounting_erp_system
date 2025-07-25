@@ -1,4 +1,3 @@
-// src/app/api/employees/route.ts
 import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
 import { employeeSchema } from "@/schemas/employee";
