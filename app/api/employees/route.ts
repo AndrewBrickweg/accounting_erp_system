@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
 import { employeeSchema } from "@/schemas/employee";
 import { getAllEmployees, createEmployee } from "@/lib/employee";
+import { handleError } from "@/lib/errors";
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
     return NextResponse.json(employees);
   } catch (error) {
     console.error("Error fetching employees:", error);
-    return new Response("Internal Server Error", { status: 500 });
+    return handleError("Internal Server Error", 500);
   }
 }
 
@@ -20,9 +21,8 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, employeeSchema);
 
     if (!validation.success) {
-      return new NextResponse(JSON.stringify({ errors: validation.errors }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
+      return handleError("Validation failed", 400, {
+        errors: validation.errors,
       });
     }
     const { firstName, lastName, email, role, departmentId } = validation.data!;
@@ -37,6 +37,6 @@ export async function POST(request: Request) {
     return NextResponse.json(employee);
   } catch (error) {
     console.error("Error creating employee:", error);
-    return new Response("Internal Server Error", { status: 500 });
+    return handleError("Internal Server Error", 500);
   }
 }
