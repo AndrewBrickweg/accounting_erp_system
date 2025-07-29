@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
 import { employeeSchema } from "@/schemas/employee";
 import { getAllEmployees, createEmployee } from "@/lib/employee";
-import { handleError } from "@/lib/errors";
+import { handleError } from "@/lib/error";
 
 export async function GET() {
   try {

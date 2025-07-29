@@ -6,7 +6,7 @@ import {
   updateEmployee,
   deleteEmployee,
 } from "@/lib/employee";
-import { handleError } from "@/lib/errors";
+import { handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
@@ -54,6 +54,7 @@ export async function PUT(
     return handleError("Internal Server Error", 500);
   }
 }
+
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
 import { vendorSchema } from "@/schemas/vendors";
 import { getVendorById, updateVendor, deleteVendor } from "@/lib/vendor";
-import { handleError } from "@/lib/errors";
+import { handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,

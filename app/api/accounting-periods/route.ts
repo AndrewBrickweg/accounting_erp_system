@@ -4,8 +4,8 @@ import { accountingPeriodSchema } from "@/schemas/accounting-periods";
 import {
   getAllAccountingPeriods,
   createAccountingPeriod,
-} from "@/lib/accounting-periods";
-import { handleError } from "@/lib/errors";
+} from "@/lib/accounting-period";
+import { handleError } from "@/lib/error";
 
 export async function GET() {
   try {
