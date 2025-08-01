@@ -186,27 +186,61 @@ model BankAccount {
   reconciliations BankReconciliation[]
 }
 
-model BankTransaction {
-  id              Int         @id @default(autoincrement())
-  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
-  bankAccountId   Int
-  transactionDate DateTime
-  description     String
-  amount          Float
-  isDeposit       Boolean
-}
-
 model BankReconciliation {
-  id                 Int         @id @default(autoincrement())
-  bankAccount        BankAccount @relation(fields: [bankAccountId], references: [id])
+  id                 Int                 @id @default(autoincrement())
+  bankAccount        BankAccount         @relation(fields: [bankAccountId], references: [id])
   bankAccountId      Int
   statementStartDate DateTime
   statementEndDate   DateTime
+  openingBalance     Float
   reconciledBalance  Float
-  completedBy        Employee    @relation("CompletedBy", fields: [completedById], references: [id])
-  completedById      Int
-  completedAt        DateTime
+  difference         Float?
+  status             ReconciliationStatus
+  notes              String?
+  completedBy        Employee?           @relation("CompletedBy", fields: [completedById], references: [id])
+  completedById      Int?
+  completedAt        DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  transactions       ReconciledTransaction[]
 }
+
+enum ReconciliationStatus {
+  PENDING
+  RECONCILED
+  FLAGGED
+  IN_PROGRESS
+  COMPLETED
+  ERROR
+}
+
+
+model BankTransaction {
+  id              Int                      @id @default(autoincrement())
+  bankAccount     BankAccount              @relation(fields: [bankAccountId], references: [id])
+  bankAccountId   Int
+  amount          Float
+  date            DateTime
+  description     String
+  reference       String?
+  createdAt       DateTime                 @default(now())
+
+  reconciliations ReconciledTransaction[]
+}
+
+model ReconciledTransaction {
+  id                   Int                 @id @default(autoincrement())
+  reconciliation       BankReconciliation @relation(fields: [reconciliationId], references: [id])
+  reconciliationId     Int
+  transaction          BankTransaction    @relation(fields: [transactionId], references: [id])
+  transactionId        Int
+  isMatched            Boolean            @default(false)
+  matchedAt            DateTime?
+  notes                String?
+}
+
+
 
 model AccountingPeriod {
   id             Int            @id @default(autoincrement())
