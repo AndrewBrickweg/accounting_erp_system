@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       email,
       role,
       departmentId,
+      managerId: validation.data?.managerId || null,
     });
 
     return NextResponse.json(employee);

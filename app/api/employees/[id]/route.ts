@@ -46,6 +46,7 @@ export async function PUT(
       email: validation.data?.email,
       role: validation.data?.role,
       departmentId: validation.data?.departmentId,
+      managerId: validation.data?.managerId || null,
     });
 
     return NextResponse.json(updatedEmployee);

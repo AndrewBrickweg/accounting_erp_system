@@ -9,6 +9,7 @@ export const employeeSchema = z.object({
     .number()
     .int()
     .positive("Department ID must be a positive integer"),
+  managerId: z.number().int().optional().nullable(),
 });
 
 export const employeeUpdateSchema = employeeSchema.partial();
@@ -18,10 +19,19 @@ export const employeeListSchema = z.array(
     id: z.number(),
     firstName: z.string(),
     lastName: z.string(),
+    email: z.string(),
     role: z.string(),
     department: z.object({
       name: z.string(), // assuming JOIN to get department name
     }),
+    manager: z
+      .object({
+        id: z.number(),
+        firstName: z.string(),
+        lastName: z.string(),
+      })
+      .optional()
+      .nullable(),
   })
 );
 
@@ -36,6 +46,15 @@ export const employeeDetailSchema = z.object({
     id: z.number(),
     name: z.string(),
   }),
+  managerId: z.number().int().positive().nullable().optional(),
+  manager: z
+    .object({
+      id: z.number(),
+      firstName: z.string(),
+      lastName: z.string(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export type EmployeeInput = z.infer<typeof employeeSchema>;

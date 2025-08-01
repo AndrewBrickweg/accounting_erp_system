@@ -15,15 +15,17 @@ datasource db {
 }
 
 model Department {
-  id           Int           @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   name         String
-  managerId    Int?          @unique
-  code         String        @unique
-  employees    Employee[]
+  manager      Employee?   @relation("DepartmentManager", fields: [managerId], references: [id])
+  managerId    Int?        @unique
+  code         String      @unique
+  employees    Employee[]  @relation("DepartmentEmployees")
   invoices     Invoice[]
   glCodings    GLCoding[]
   journalLines JournalLine[]
 }
+
 
 model Employee {
   id           Int        @id @default(autoincrement())
@@ -31,8 +33,14 @@ model Employee {
   lastName     String
   email        String     @unique
   role         String
-  department   Department @relation(fields: [departmentId], references: [id])
+  department   Department @relation("DepartmentEmployees", fields: [departmentId], references: [id])
   departmentId Int
+
+  manages      Department? @relation("DepartmentManager")
+  manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
+  managerId    Int?
+
+  subordinates Employee[] @relation("EmployeeManager")
 
   uploadedDocuments        Document[]           @relation("UploadedBy")
   submittedInvoices        Invoice[]            @relation("SubmittedBy")
@@ -43,6 +51,7 @@ model Employee {
 
   submittedSalesInvoices SalesInvoice[] @relation("SubmittedSalesInvoices")
 }
+
 
 model Vendor {
   id          Int       @id @default(autoincrement())
