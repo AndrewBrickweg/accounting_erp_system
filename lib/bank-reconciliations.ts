@@ -15,8 +15,8 @@ export async function getBankReconciliationById(id: number) {
 
 export async function createBankReconciliation(data: {
   bankAccountId: number;
-  startDate: Date;
-  endDate: Date;
+  statementStartDate: Date;
+  statementEndDate: Date;
   status: string;
   notes?: string | null;
   completedById?: number | null;
@@ -28,8 +28,8 @@ export async function updateBankReconciliation(
   id: number,
   data: {
     bankAccountId?: number;
-    startDate?: Date;
-    endDate?: Date;
+    statementStartDate?: Date;
+    statementEndDate?: Date;
     status?: string;
     notes?: string | null;
     completedById?: number | null;
