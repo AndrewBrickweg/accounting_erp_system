@@ -5,7 +5,7 @@ import {
   getBankReconciliationById,
   updateBankReconciliation,
   deleteBankReconciliation,
-} from "@/lib/bank-reconciliations";
+} from "@/lib/bank-reconciliation";
 import { handleError } from "@/lib/error";
 
 export async function GET(

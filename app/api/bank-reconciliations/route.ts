@@ -4,7 +4,7 @@ import { bankReconciliationSchema } from "@/schemas/bank-reconciliations";
 import {
   getAllBankReconciliations,
   createBankReconciliation,
-} from "@/lib/bank-reconciliations";
+} from "@/lib/bank-reconciliation";
 import { handleError } from "@/lib/error";
 
 export async function GET() {
