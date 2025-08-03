@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
-import { employeeSchema } from "@/schemas/employee";
+import { employeeSchema } from "@/schemas/employees";
 import { getAllEmployees, createEmployee } from "@/lib/employee";
 import { handleError } from "@/lib/error";
 

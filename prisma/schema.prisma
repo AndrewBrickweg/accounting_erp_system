@@ -59,7 +59,7 @@ model Vendor {
   contactName String
   email       String
   phone       String
-  address     String
+  address     Address?
   invoices    Invoice[]
 }
 
@@ -164,12 +164,31 @@ model JournalLine {
 
 model Customer {
   id            Int            @id @default(autoincrement())
-  name          String
-  email         String
-  phone         String
-  address       String
+  companyName   String?
+  firstName     String?
+  lastName      String?
+  email         String         @unique
+  phone         String?        @db.VarChar(20)
+  address       Address?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
   salesInvoices SalesInvoice[]
 }
+
+model Address {
+  id         Int       @id @default(autoincrement())
+  street     String?
+  city       String?
+  state      String?
+  zip        String?
+  country    String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  vendor     Vendor? @relation(fields: [vendorId], references: [id])
+  customerId Int?       @unique
+  vendorId   Int?         @unique
+}
+
 
 model SalesInvoice {
   id            Int      @id @default(autoincrement())
