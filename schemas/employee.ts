@@ -22,7 +22,7 @@ export const employeeListSchema = z.array(
     email: z.string(),
     role: z.string(),
     department: z.object({
-      name: z.string(), // assuming JOIN to get department name
+      name: z.string(),
     }),
     manager: z
       .object({

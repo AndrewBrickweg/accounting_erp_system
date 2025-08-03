@@ -84,7 +84,7 @@ model Invoice {
 
 model GLCoding {
   id           Int             @id @default(autoincrement())
-  account      ChartOfAccounts @relation(fields: [accountId], references: [id])
+  account      ChartOfAccount @relation(fields: [accountId], references: [id])
   accountId    Int
   description  String
   amount       Float
@@ -129,7 +129,7 @@ model InvoiceApprovalLog {
   approvedById  Int
 }
 
-model ChartOfAccounts {
+model ChartOfAccount {
   id            Int           @id @default(autoincrement())
   accountNumber String        @unique
   name          String
@@ -154,7 +154,7 @@ model JournalLine {
   id             Int             @id @default(autoincrement())
   journalEntry   JournalEntry    @relation(fields: [journalEntryId], references: [id])
   journalEntryId Int
-  account        ChartOfAccounts @relation(fields: [accountId], references: [id])
+  account        ChartOfAccount @relation(fields: [accountId], references: [id])
   accountId      Int
   department     Department      @relation(fields: [departmentId], references: [id])
   departmentId   Int
