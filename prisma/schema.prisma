@@ -18,7 +18,7 @@ model Department {
   id           Int         @id @default(autoincrement())
   name         String
   manager      Employee?   @relation("DepartmentManager", fields: [managerId], references: [id])
-  managerId    Int?        @unique
+  managerId    String?        @unique
   code         String      @unique
   employees    Employee[]  @relation("DepartmentEmployees")
   invoices     Invoice[]
@@ -28,17 +28,19 @@ model Department {
 
 
 model Employee {
-  id           Int        @id @default(autoincrement())
+  id           String @id @default(uuid())
   firstName    String
   lastName     String
   email        String     @unique
   role         String
+  isActive     Boolean @default(true)
+  terminatedAt DateTime?
   department   Department @relation("DepartmentEmployees", fields: [departmentId], references: [id])
   departmentId Int
 
   manages      Department? @relation("DepartmentManager")
   manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
-  managerId    Int?
+  managerId    String?
 
   subordinates Employee[] @relation("EmployeeManager")
 
@@ -60,6 +62,7 @@ model Vendor {
   email       String
   phone       String
   address     Address?
+  isActive    Boolean @default(true)
   invoices    Invoice[]
 }
 
@@ -73,36 +76,55 @@ model Invoice {
   vendor        Vendor               @relation(fields: [vendorId], references: [id])
   vendorId      Int
   submittedBy   Employee             @relation("SubmittedBy", fields: [submittedById], references: [id])
-  submittedById Int
+  submittedById String
   department    Department           @relation(fields: [departmentId], references: [id])
   departmentId  Int
   glCodings     GLCoding[]
   documents     Document[]
   payments      Payment[]
   approvals     InvoiceApprovalLog[]
+  currency      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
 }
 
 model GLCoding {
-  id           Int             @id @default(autoincrement())
-  account      ChartOfAccount @relation(fields: [accountId], references: [id])
-  accountId    Int
-  description  String
-  amount       Float
-  invoice      Invoice         @relation(fields: [invoiceId], references: [id])
-  invoiceId    Int
-  department   Department      @relation(fields: [departmentId], references: [id])
-  departmentId Int
+  id            Int             @id @default(autoincrement())
+  account       ChartOfAccount @relation(fields: [accountId], references: [id])
+  accountId     Int
+  description   String
+  amount        Float
+  invoice       Invoice?         @relation(fields: [invoiceId], references: [id])
+  invoiceId     Int?
+  memo         String?
+  type         String? // Optional: "DR" or "CR"
+  department    Department?      @relation(fields: [departmentId], references: [id])
+  departmentId  Int?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  transactionId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Transaction {
+  id String @id @default(uuid())
+  date DateTime @default(now())
+  memo String?
+  entries GLCoding[]
 }
 
 model Document {
-  id           Int      @id @default(autoincrement())
+  id           String      @id @default(uuid())
   fileName     String
+  type         String? // Enum preferred: INVOICE, RECEIPT, REPORT
+  fileSize     Int?
   fileUrl      String
   uploadDate   DateTime
   invoice      Invoice? @relation(fields: [invoiceId], references: [id])
   invoiceId    Int?
   uploadedBy   Employee @relation("UploadedBy", fields: [uploadedById], references: [id])
-  uploadedById Int
+  uploadedById String
 }
 
 model Payment {
@@ -113,7 +135,7 @@ model Payment {
   invoice     Invoice  @relation(fields: [invoiceId], references: [id])
   invoiceId   Int
   paidBy      Employee @relation(fields: [paidById], references: [id])
-  paidById    Int
+  paidById    String
 }
 
 model InvoiceApprovalLog {
@@ -126,7 +148,7 @@ model InvoiceApprovalLog {
   invoice       Invoice  @relation(fields: [invoiceId], references: [id])
   invoiceId     Int
   approvedBy    Employee @relation(fields: [approvedById], references: [id])
-  approvedById  Int
+  approvedById  String
 }
 
 model ChartOfAccount {
@@ -143,8 +165,10 @@ model JournalEntry {
   id          Int               @id @default(autoincrement())
   entryDate   DateTime
   memo        String?
+  referenceNumber String?
+  source          String?
   createdBy   Employee          @relation(fields: [createdById], references: [id])
-  createdById Int
+  createdById String
   lines       JournalLine[]
   period      AccountingPeriod? @relation(fields: [periodId], references: [id])
   periodId    Int?
@@ -163,7 +187,7 @@ model JournalLine {
 }
 
 model Customer {
-  id            Int            @id @default(autoincrement())
+  id            String            @id @default(uuid())
   companyName   String?
   firstName     String?
   lastName      String?
@@ -185,8 +209,8 @@ model Address {
   country    String?
   customer   Customer? @relation(fields: [customerId], references: [id])
   vendor     Vendor? @relation(fields: [vendorId], references: [id])
-  customerId Int?       @unique
-  vendorId   Int?         @unique
+  customerId String? @unique
+  vendorId   Int?    @unique    
 }
 
 
@@ -196,17 +220,23 @@ model SalesInvoice {
   invoiceDate   DateTime
   dueDate       DateTime
   totalAmount   Float
+  currency   String?
+  taxAmount  Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   status        String
   customer      Customer @relation(fields: [customerId], references: [id])
-  customerId    Int
+  customerId    String
 
   submittedBy   Employee @relation("SubmittedSalesInvoices", fields: [submittedById], references: [id])
-  submittedById Int
+  submittedById String
 }
 
 model BankAccount {
   id              Int                  @id @default(autoincrement())
   name            String
+  type            String?
+  isPrimary       Boolean @default(false)
   accountNumber   String
   bankName        String
   balance         Float
@@ -226,7 +256,7 @@ model BankReconciliation {
   status             ReconciliationStatus
   notes              String?
   completedBy        Employee?           @relation("CompletedBy", fields: [completedById], references: [id])
-  completedById      Int?
+  completedById      String?
   completedAt        DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
