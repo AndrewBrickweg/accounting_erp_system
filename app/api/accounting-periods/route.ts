@@ -29,11 +29,12 @@ export async function POST(request: Request) {
       });
     }
 
-    const { periodName, startDate, endDate } = validation.data!;
+    const { periodName, startDate, endDate, isClosed } = validation.data!;
     const period = await createAccountingPeriod({
       periodName,
       startDate,
       endDate,
+      isClosed,
     });
 
     return NextResponse.json(period);

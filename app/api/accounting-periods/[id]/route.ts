@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
-import { accountingPeriodSchema } from "@/schemas/accounting-periods";
+import { accountingPeriodSchemaUpdate } from "@/schemas/accounting-periods";
 import {
   getAccountingPeriodById,
   updateAccountingPeriod,
@@ -32,7 +32,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const validation = validateSchema(body, accountingPeriodSchema);
+    const validation = validateSchema(body, accountingPeriodSchemaUpdate);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {
@@ -44,6 +44,7 @@ export async function PUT(
       periodName: validation.data?.periodName,
       startDate: validation.data?.startDate,
       endDate: validation.data?.endDate,
+      isClosed: validation.data?.isClosed,
     });
 
     return NextResponse.json(updatedPeriod);
