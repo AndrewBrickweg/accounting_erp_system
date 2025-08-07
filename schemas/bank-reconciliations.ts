@@ -11,17 +11,17 @@ export const reconciliationStatusEnum = z.enum([
 
 export const bankReconciliationSchema = z.object({
   bankAccountId: z.number().int(),
-  statementStartDate: z.date(),
-  statementEndDate: z.date(),
+  statementStartDate: z.coerce.date(),
+  statementEndDate: z.coerce.date(),
   openingBalance: z.number(),
   reconciledBalance: z.number(),
   difference: z.number().nullable().optional(),
   status: reconciliationStatusEnum,
   notes: z.string().nullable().optional(),
-  completedById: z.number().int().nullable().optional(),
-  completedAt: z.date().nullable().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+  completedById: z.string().nullable().optional(),
+  completedAt: z.coerce.date().nullable().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
 });
 
 export const bankReconciliationUpdateSchema = bankReconciliationSchema

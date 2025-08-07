@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
-import { documentSchema } from "@/schemas/documents";
+import { documentUpdateSchema } from "@/schemas/documents";
 import {
   getDocumentById,
   updateDocument,
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const document = await getDocumentById(parseInt(params.id));
+    const document = await getDocumentById(params.id);
 
     if (!document) {
       return handleError("Document not found", 404);
@@ -32,7 +32,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const validation = validateSchema(body, documentSchema);
+    const validation = validateSchema(body, documentUpdateSchema);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {
@@ -40,12 +40,14 @@ export async function PUT(
       });
     }
 
-    const updatedDocument = await updateDocument(parseInt(params.id), {
+    const updatedDocument = await updateDocument(params.id, {
       fileName: validation.data?.fileName,
       fileUrl: validation.data?.fileUrl,
       uploadDate: validation.data?.uploadDate,
-      invoiceId: validation.data?.invoiceId || null,
-      uploadedById: validation.data?.uploadedById || null,
+      invoiceId: validation.data?.invoiceId ?? null,
+      uploadedById: validation.data?.uploadedById ?? null,
+      fileSize: validation.data?.fileSize ?? undefined,
+      type: validation.data?.type,
     });
 
     return NextResponse.json(updatedDocument);
@@ -60,7 +62,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const deletedDocument = await deleteDocument(parseInt(params.id));
+    const deletedDocument = await deleteDocument(params.id);
 
     if (!deletedDocument) {
       return handleError("Document not found", 404);

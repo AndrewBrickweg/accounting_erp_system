@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const { fileName, fileUrl, uploadDate, invoiceId, uploadedById } =
+    const { fileName, fileUrl, uploadDate, invoiceId, uploadedById, type } =
       validation.data!;
     const document = await createDocument({
       fileName,
@@ -33,6 +33,8 @@ export async function POST(request: Request) {
       uploadDate,
       invoiceId,
       uploadedById,
+      fileSize: validation.data?.fileSize ?? undefined,
+      type,
     });
 
     return NextResponse.json(document);

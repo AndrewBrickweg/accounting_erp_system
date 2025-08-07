@@ -7,8 +7,8 @@ export const bankTransactionSchema = z.object({
     .positive("Bank account ID must be a positive integer"),
   description: z.string().min(1, "Description is required"),
   amount: z.number().min(0, "Amount must be a non-negative number"),
-  createdAt: z.date().optional(),
-  date: z.date().optional(),
+  createdAt: z.coerce.date().optional(),
+  date: z.coerce.date().optional(),
   reference: z.string().optional(),
 });
 
@@ -20,8 +20,8 @@ export const bankTransactionListSchema = z.array(
     bankAccountId: z.number(),
     description: z.string(),
     amount: z.number(),
-    createdAt: z.date(),
-    date: z.date(),
+    createdAt: z.coerce.date(),
+    date: z.coerce.date(),
     reference: z.string().optional(),
   })
 );
@@ -31,8 +31,8 @@ export const bankTransactionDetailSchema = z.object({
   bankAccountId: z.number(),
   description: z.string(),
   amount: z.number(),
-  createdAt: z.date(),
-  date: z.date(),
+  createdAt: z.coerce.date(),
+  date: z.coerce.date(),
   reference: z.string().optional(),
 });
 

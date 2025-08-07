@@ -25,7 +25,15 @@ export async function POST(request: Request) {
         errors: validation.errors,
       });
     }
-    const { firstName, lastName, email, role, departmentId } = validation.data!;
+    const {
+      firstName,
+      lastName,
+      email,
+      role,
+      departmentId,
+      isActive,
+      terminatedAt,
+    } = validation.data!;
     const employee = await createEmployee({
       firstName,
       lastName,
@@ -33,6 +41,8 @@ export async function POST(request: Request) {
       role,
       departmentId,
       managerId: validation.data?.managerId || null,
+      isActive,
+      terminatedAt,
     });
 
     return NextResponse.json(employee);

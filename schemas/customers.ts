@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const addressSchema = z.object({
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
+  country: z.string().optional(),
+});
+
 export const customerSchema = z
   .object({
     firstName: z.string().min(1).optional(),
@@ -7,15 +15,7 @@ export const customerSchema = z
     companyName: z.string().optional(),
     email: z.email("Invalid email address"),
     phone: z.string().optional(),
-    address: z
-      .object({
-        street: z.string().optional(),
-        city: z.string().optional(),
-        state: z.string().optional(),
-        zip: z.string().optional(),
-        country: z.string().optional(),
-      })
-      .optional(),
+    address: addressSchema.optional(),
     createdAt: z.date().optional(),
     updatedAt: z.date().optional(),
   })
@@ -38,17 +38,9 @@ export const customerListSchema = z.array(
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     companyName: z.string().optional(),
-    email: z.string(),
+    email: z.email(),
     phone: z.string().optional(),
-    address: z
-      .object({
-        street: z.string().optional(),
-        city: z.string().optional(),
-        state: z.string().optional(),
-        zip: z.string().optional(),
-        country: z.string().optional(),
-      })
-      .optional(),
+    address: addressSchema.optional(),
   })
 );
 
@@ -57,17 +49,9 @@ export const customerDetailSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   companyName: z.string().optional(),
-  email: z.string(),
+  email: z.email(),
   phone: z.string().optional(),
-  address: z
-    .object({
-      street: z.string().optional(),
-      city: z.string().optional(),
-      state: z.string().optional(),
-      zip: z.string().optional(),
-      country: z.string().optional(),
-    })
-    .optional(),
+  address: addressSchema.optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });

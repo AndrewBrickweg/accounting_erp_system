@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
-import { employeeSchema } from "@/schemas/employees";
+import { employeeUpdateSchema } from "@/schemas/employees";
 import {
   getEmployeeById,
   updateEmployee,
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const employee = await getEmployeeById(parseInt(params.id));
+    const employee = await getEmployeeById(params.id);
 
     if (!employee) {
       return handleError("Employee not found", 404);
@@ -32,7 +32,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const validation = validateSchema(body, employeeSchema);
+    const validation = validateSchema(body, employeeUpdateSchema);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {
@@ -40,13 +40,15 @@ export async function PUT(
       });
     }
 
-    const updatedEmployee = await updateEmployee(parseInt(params.id), {
+    const updatedEmployee = await updateEmployee(params.id, {
       firstName: validation.data?.firstName,
       lastName: validation.data?.lastName,
       email: validation.data?.email,
       role: validation.data?.role,
       departmentId: validation.data?.departmentId,
       managerId: validation.data?.managerId || null,
+      isActive: validation.data?.isActive,
+      terminatedAt: validation.data?.terminatedAt || null,
     });
 
     return NextResponse.json(updatedEmployee);
@@ -61,7 +63,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const employee = await deleteEmployee(parseInt(params.id));
+    const employee = await deleteEmployee(params.id);
 
     if (!employee) {
       return handleError("Employee not found", 404);

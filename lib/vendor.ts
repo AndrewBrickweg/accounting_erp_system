@@ -4,6 +4,7 @@ export async function getAllVendors() {
   return await prisma.vendor.findMany({
     include: {
       employees: true,
+      address: true,
     },
   });
 }
@@ -19,9 +20,24 @@ export async function createVendor(data: {
   contactName: string;
   email: string;
   phone: string;
-  address: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
 }) {
-  return await prisma.vendor.create({ data });
+  return await prisma.vendor.create({
+    data: {
+      name: data.name,
+      contactName: data.contactName,
+      email: data.email,
+      phone: data.phone,
+      address: data.address ? { create: data.address } : undefined,
+    },
+    include: { address: true, employees: true },
+  });
 }
 
 export async function updateVendor(
@@ -31,7 +47,13 @@ export async function updateVendor(
     contactName?: string;
     email?: string;
     phone?: string;
-    address?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+      country?: string;
+    };
   }
 ) {
   return await prisma.vendor.update({

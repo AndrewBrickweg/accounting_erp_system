@@ -9,7 +9,7 @@ export async function getAllCustomers() {
 export async function getCustomerById(id: number) {
   return await prisma.Customer.findUnique({
     where: { id },
-    inclyde: { address: true },
+    include: { address: true },
   });
 }
 
@@ -27,7 +27,17 @@ export async function createCustomer(data: {
     country?: string;
   };
 }) {
-  return await prisma.Customer.create({ data });
+  return await prisma.Customer.create({
+    data: {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      companyName: data.companyName,
+      email: data.email,
+      phone: data.phone,
+      address: data.address ? { create: data.address } : undefined,
+    },
+    include: { address: true, employees: true },
+  });
 }
 
 export async function updateCustomer(

@@ -14,7 +14,7 @@ export const chartOfAccountListSchema = z.array(
     id: z.number(),
     accountNumber: z.string(),
     name: z.string(),
-    type: z.string(),
+    type: z.enum(["asset", "liability", "equity", "revenue", "expense"]),
     isActive: z.boolean(),
   })
 );

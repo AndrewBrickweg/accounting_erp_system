@@ -6,7 +6,7 @@ export async function getAllDocuments() {
   });
 }
 
-export async function getDocumentById(id: number) {
+export async function getDocumentById(id: string) {
   return await prisma.document.findUnique({
     where: { id },
     include: { invoice: true, uploadedBy: true },
@@ -16,21 +16,25 @@ export async function getDocumentById(id: number) {
 export async function createDocument(data: {
   fileName: string;
   fileUrl: string;
+  fileSize?: number;
+  type?: string;
   uploadDate?: Date;
   invoiceId?: number | null;
-  uploadedById?: number | null;
+  uploadedById?: string | null;
 }) {
   return await prisma.document.create({ data });
 }
 
 export async function updateDocument(
-  id: number,
+  id: string,
   data: {
     fileName?: string;
     fileUrl?: string;
+    fileSize?: number;
+    type?: string;
     uploadDate?: Date;
     invoiceId?: number | null;
-    uploadedById?: number | null;
+    uploadedById?: string | null;
   }
 ) {
   return await prisma.document.update({
@@ -40,7 +44,7 @@ export async function updateDocument(
   });
 }
 
-export async function deleteDocument(id: number) {
+export async function deleteDocument(id: string) {
   return await prisma.document.delete({
     where: { id },
     include: { invoice: true, uploadedBy: true },

@@ -6,7 +6,7 @@ export async function getAllEmployees() {
   });
 }
 
-export async function getEmployeeById(id: number) {
+export async function getEmployeeById(id: string) {
   return await prisma.employee.findUnique({
     where: { id },
     include: { department: true, manager: true },
@@ -19,20 +19,24 @@ export async function createEmployee(data: {
   email: string;
   role: string;
   departmentId: number;
-  managerId?: number | null;
+  managerId?: string | null;
+  isActive?: boolean;
+  terminatedAt?: Date | null;
 }) {
   return await prisma.employee.create({ data });
 }
 
 export async function updateEmployee(
-  id: number,
+  id: string,
   data: {
     firstName?: string;
     lastName?: string;
     email?: string;
     role?: string;
     departmentId?: number;
-    managerId?: number | null;
+    managerId?: string | null;
+    isActive?: boolean;
+    terminatedAt?: Date | null;
   }
 ) {
   return await prisma.employee.update({
@@ -42,7 +46,7 @@ export async function updateEmployee(
   });
 }
 
-export async function deleteEmployee(id: number) {
+export async function deleteEmployee(id: string) {
   return await prisma.employee.delete({
     where: { id },
     include: { department: true, manager: true },
