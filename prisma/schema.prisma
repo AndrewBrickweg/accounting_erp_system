@@ -26,13 +26,19 @@ model Department {
   journalLines JournalLine[]
 }
 
+enum Role {
+  admin
+  manager
+  staff
+}
+
 
 model Employee {
   id           String @id @default(uuid())
   firstName    String
   lastName     String
   email        String     @unique
-  role         String
+  role         Role
   isActive     Boolean @default(true)
   terminatedAt DateTime?
   department   Department @relation("DepartmentEmployees", fields: [departmentId], references: [id])
@@ -61,7 +67,7 @@ model Vendor {
   contactName String
   email       String
   phone       String
-  address     Address?
+  address     Address? @relation("VendorAddress")
   isActive    Boolean @default(true)
   invoices    Invoice[]
 }
@@ -193,7 +199,7 @@ model Customer {
   lastName      String?
   email         String         @unique
   phone         String?        @db.VarChar(20)
-  address       Address?
+  address       Address?       @relation("CustomerAddress")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -207,10 +213,11 @@ model Address {
   state      String?
   zip        String?
   country    String?
-  customer   Customer? @relation(fields: [customerId], references: [id])
-  vendor     Vendor? @relation(fields: [vendorId], references: [id])
-  customerId String? @unique
-  vendorId   Int?    @unique    
+  vendor     Vendor?   @relation("VendorAddress", fields: [vendorId], references: [id])
+  vendorId   Int?      @unique
+
+  customer   Customer? @relation("CustomerAddress", fields: [customerId], references: [id])
+  customerId String?   @unique  
 }
 
 
