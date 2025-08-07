@@ -5,6 +5,8 @@ export const bankAccountSchema = z.object({
   accountNumber: z.string().min(1, "Account number is required"),
   bankName: z.string().min(1, "Bank name is required"),
   balance: z.number().min(0, "Balance must be a non-negative number"),
+  isPrimary: z.boolean().optional().default(false),
+  type: z.enum(["OPERATING", "RESERVE", "PAYROLL", "OTHER"]),
 });
 
 export const bankAccountUpdateSchema = bankAccountSchema.partial();
@@ -16,6 +18,8 @@ export const bankAccountListSchema = z.array(
     accountNumber: z.string(),
     bankName: z.string(),
     balance: z.number(),
+    isPrimary: z.boolean().optional().default(false),
+    type: z.enum(["OPERATING", "RESERVE", "PAYROLL", "OTHER"]),
   })
 );
 
@@ -25,6 +29,8 @@ export const bankAccountDetailSchema = z.object({
   accountNumber: z.string(),
   bankName: z.string(),
   balance: z.number(),
+  isPrimary: z.boolean().optional().default(false),
+  type: z.enum(["OPERATING", "RESERVE", "PAYROLL", "OTHER"]),
 });
 
 export type BankAccountInput = z.infer<typeof bankAccountSchema>;

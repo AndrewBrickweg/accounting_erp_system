@@ -15,6 +15,8 @@ export async function createBankAccount(data: {
   accountNumber: string;
   bankName: string;
   balance: number;
+  type?: "OPERATING" | "RESERVE" | "PAYROLL" | "OTHER";
+  isPrimary?: boolean;
 }) {
   return await prisma.bankAccount.create({ data });
 }
@@ -26,6 +28,8 @@ export async function updateBankAccount(
     accountNumber?: string;
     bankName?: string;
     balance?: number;
+    type?: "OPERATING" | "RESERVE" | "PAYROLL" | "OTHER";
+    isPrimary?: boolean;
   }
 ) {
   return await prisma.bankAccount.update({
