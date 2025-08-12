@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateSchema } from "@/lib/validate";
-import { bankReconciliationSchema } from "@/schemas/bank-reconciliations";
+import { bankReconciliationUpdateSchema } from "@/schemas/bank-reconciliations";
 import {
   getBankReconciliationById,
   updateBankReconciliation,
@@ -34,7 +34,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const validation = validateSchema(body, bankReconciliationSchema);
+    const validation = validateSchema(body, bankReconciliationUpdateSchema);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {

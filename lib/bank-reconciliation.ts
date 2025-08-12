@@ -19,7 +19,7 @@ export async function createBankReconciliation(data: {
   statementEndDate: Date;
   status: string;
   notes?: string | null;
-  completedById?: number | null;
+  completedById?: string | null;
 }) {
   return await prisma.bankReconciliation.create({ data });
 }
@@ -32,7 +32,7 @@ export async function updateBankReconciliation(
     statementEndDate?: Date;
     status?: string;
     notes?: string | null;
-    completedById?: number | null;
+    completedById?: string | null;
   }
 ) {
   return await prisma.bankReconciliation.update({
