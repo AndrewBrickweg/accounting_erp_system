@@ -114,9 +114,16 @@ model GLCoding {
 }
 
 model Transaction {
-  id String @id @default(uuid())
-  date DateTime @default(now())
-  memo String?
+  id              String @id @default(uuid())
+  date            DateTime @default(now())
+  memo            String?
+  referenceNumber String?
+  type            String
+  source          String?
+  status          String @default("draft")
+  isPosted        Boolean @default(false)
+  postedAt        DateTime?
+
   entries GLCoding[]
 }
 
