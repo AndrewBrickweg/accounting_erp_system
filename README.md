@@ -1,3 +1,5 @@
+V1.0
+
 AI & ML-Powered Automation
 
 - NLP-Based Invoice Parsing (spaCy, PDFplumber, Tesseract)

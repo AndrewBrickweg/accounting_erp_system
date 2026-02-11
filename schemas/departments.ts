@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const departmentSchema = z.object({
   name: z.string().min(1, "Department name is required"),
-  managerId: z.number().int().optional().nullable(),
+  managerId: z.string().optional().nullable(),
   code: z.string().min(1, "Department code is required"),
 });
 
@@ -15,7 +15,7 @@ export const departmentListSchema = z.array(
     code: z.string().min(1, "Department code is required"),
     manager: z
       .object({
-        id: z.number(),
+        id: z.string(),
         firstName: z.string(),
         lastName: z.string(),
       })
@@ -28,10 +28,10 @@ export const departmentDetailSchema = z.object({
   id: z.number(),
   name: z.string(),
   code: z.string().min(1, "Department code is required"),
-  managerId: z.number().int().optional().nullable(),
+  managerId: z.string().optional().nullable(),
   manager: z
     .object({
-      id: z.number(),
+      id: z.string(),
       firstName: z.string(),
       lastName: z.string(),
     })

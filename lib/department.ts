@@ -12,7 +12,7 @@ export async function getDepartmentById(id: number) {
 
 export async function createDepartment(data: {
   name: string;
-  managerId?: number | null;
+  managerId?: string | null;
   code: string;
 }) {
   return await prisma.department.create({ data });
@@ -22,7 +22,7 @@ export async function updateDepartment(
   id: number,
   data: {
     name: string;
-    managerId?: number | null;
+    managerId?: string | null;
     code: string;
   }
 ) {
