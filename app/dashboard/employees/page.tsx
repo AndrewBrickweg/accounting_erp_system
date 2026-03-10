@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState([]);
+  return <div>Employees dashboard is under construction.</div>;
 }
