@@ -1,38 +1,59 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { departmentSchema } from "@/schemas/departments";
+import {
+  parsePositiveIntId,
+  parseSchemaOrThrow,
+  validateSchema,
+} from "@/lib/validate";
+import {
+  departmentDetailSchema,
+  departmentUpdateSchema,
+} from "@/schemas/departments";
 import {
   getDepartmentById,
   updateDepartment,
   deleteDepartment,
 } from "@/lib/department";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const department = await getDepartmentById(parseInt(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    const department = await getDepartmentById(id);
 
     if (!department) {
       return handleError("Department not found", 404);
     }
 
-    return NextResponse.json(department);
+    return NextResponse.json(parseSchemaOrThrow(department, departmentDetailSchema));
   } catch (error) {
     console.error("Error fetching department:", error);
-    return handleError("Failed to fetch department", 500);
+    return handleApiError(error, "Failed to fetch department");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
     const body = await request.json();
-    const validation = validateSchema(body, departmentSchema);
+    const validation = validateSchema(body, departmentUpdateSchema);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {
@@ -40,33 +61,34 @@ export async function PUT(
       });
     }
 
-    const updatedDepartment = await updateDepartment(parseInt(params.id), body);
+    const updatedDepartment = await updateDepartment(id, validation.data!);
 
-    if (!updatedDepartment) {
-      return handleError("Failed to update department", 500);
-    }
-
-    return NextResponse.json(updatedDepartment);
+    return NextResponse.json(
+      parseSchemaOrThrow(updatedDepartment, departmentDetailSchema)
+    );
   } catch (error) {
     console.error("Error updating department:", error);
-    return handleError("Failed to update department", 500);
+    return handleApiError(error, "Failed to update department");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const deletedDepartment = await deleteDepartment(parseInt(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
 
-    if (!deletedDepartment) {
-      return handleError("Failed to delete department", 500);
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
     }
+
+    await deleteDepartment(id);
 
     return NextResponse.json({ message: "Department deleted successfully" });
   } catch (error) {
     console.error("Error deleting department:", error);
-    return handleError("Failed to delete department", 500);
+    return handleApiError(error, "Failed to delete department");
   }
 }

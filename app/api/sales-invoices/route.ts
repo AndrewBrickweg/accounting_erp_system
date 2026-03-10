@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { salesInvoiceSchema } from "@/schemas/sales-invoices";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  salesInvoiceDetailSchema,
+  salesInvoiceListSchema,
+  salesInvoiceSchema,
+} from "@/schemas/sales-invoices";
 import { getAllSalesInvoices, createSalesInvoice } from "@/lib/sales-invoice";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const salesInvoices = await getAllSalesInvoices();
 
-    return NextResponse.json(salesInvoices);
+    return NextResponse.json(
+      parseSchemaOrThrow(salesInvoices, salesInvoiceListSchema)
+    );
   } catch (error) {
     console.error("Error fetching sales invoices:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch sales invoices");
   }
 }
 
@@ -46,12 +52,14 @@ export async function POST(request: Request) {
       customerId,
       submittedById,
       currency,
-      taxAmount: validation.data?.taxAmount || null,
+      taxAmount: validation.data?.taxAmount ?? null,
     });
 
-    return NextResponse.json(salesInvoice);
+    return NextResponse.json(
+      parseSchemaOrThrow(salesInvoice, salesInvoiceDetailSchema)
+    );
   } catch (error) {
     console.error("Error creating sales invoice:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create sales invoice");
   }
 }

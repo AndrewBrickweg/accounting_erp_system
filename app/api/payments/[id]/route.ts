@@ -1,32 +1,50 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { paymentUpdateSchema } from "@/schemas/payments";
+import {
+  parsePositiveIntId,
+  parseSchemaOrThrow,
+  validateSchema,
+} from "@/lib/validate";
+import { paymentDetailSchema, paymentUpdateSchema } from "@/schemas/payments";
 import { getPaymentById, updatePayment, deletePayment } from "@/lib/payments";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const payment = await getPaymentById(Number(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    const payment = await getPaymentById(id);
 
     if (!payment) {
       return handleError("Payment not found", 404);
     }
 
-    return NextResponse.json(payment);
+    return NextResponse.json(parseSchemaOrThrow(payment, paymentDetailSchema));
   } catch (error) {
     console.error("Error fetching payment:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch payment");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
     const body = await request.json();
     const validation = validateSchema(body, paymentUpdateSchema);
 
@@ -36,30 +54,31 @@ export async function PUT(
       });
     }
 
-    const updatedPayment = await updatePayment(Number(params.id), {
-      amountPaid: validation.data?.amountPaid,
-      paymentDate: validation.data?.paymentDate,
-      method: validation.data?.method,
-      invoiceId: validation.data?.invoiceId,
-      paidById: validation.data?.paidById,
-    });
-    return NextResponse.json(updatedPayment);
+    const updatedPayment = await updatePayment(id, validation.data!);
+    return NextResponse.json(parseSchemaOrThrow(updatedPayment, paymentDetailSchema));
   } catch (error) {
     console.error("Error updating payment:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to update payment");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deletePayment(Number(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    await deletePayment(id);
 
     return NextResponse.json({ message: "Payment deleted successfully" });
   } catch (error) {
     console.error("Error deleting payment:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to delete payment");
   }
 }

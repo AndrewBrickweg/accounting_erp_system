@@ -1,38 +1,43 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { customerSchema } from "@/schemas/customers";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  customerDetailSchema,
+  customerUpdateSchema,
+} from "@/schemas/customers";
 import {
   getCustomerById,
   updateCustomer,
   deleteCustomer,
 } from "@/lib/customer";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const customer = await getCustomerById(parseInt(params.id));
+    const { id } = await params;
+    const customer = await getCustomerById(id);
 
     if (!customer) {
       return handleError("Customer not found", 404);
     }
 
-    return NextResponse.json(customer);
+    return NextResponse.json(parseSchemaOrThrow(customer, customerDetailSchema));
   } catch (error) {
     console.error("Error fetching customer:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch customer");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    const validation = validateSchema(body, customerSchema);
+    const validation = validateSchema(body, customerUpdateSchema);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {
@@ -40,40 +45,30 @@ export async function PUT(
       });
     }
 
-    const updatedCustomer = await updateCustomer(parseInt(params.id), {
-      firstName: validation.data?.firstName,
-      lastName: validation.data?.lastName,
-      companyName: validation.data?.companyName,
-      email: validation.data?.email,
-      phone: validation.data?.phone,
-      address: validation.data?.address
-        ? {
-            street: validation.data.address.street,
-            city: validation.data.address.city,
-            state: validation.data.address.state,
-            zip: validation.data.address.zip,
-            country: validation.data.address.country,
-          }
-        : undefined,
-    });
+    const updatedCustomer = await updateCustomer(id, validation.data!);
 
-    return NextResponse.json(updatedCustomer);
+    return NextResponse.json(
+      parseSchemaOrThrow(updatedCustomer, customerDetailSchema)
+    );
   } catch (error) {
     console.error("Error updating customer:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to update customer");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const deletedCustomer = await deleteCustomer(parseInt(params.id));
+    const { id } = await params;
+    const deletedCustomer = await deleteCustomer(id);
 
-    return NextResponse.json(deletedCustomer);
+    return NextResponse.json(
+      parseSchemaOrThrow(deletedCustomer, customerDetailSchema)
+    );
   } catch (error) {
     console.error("Error deleting customer:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to delete customer");
   }
 }

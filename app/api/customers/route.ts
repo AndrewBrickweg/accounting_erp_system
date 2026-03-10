@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { customerSchema } from "@/schemas/customers";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  customerDetailSchema,
+  customerListSchema,
+  customerSchema,
+} from "@/schemas/customers";
 import { getAllCustomers, createCustomer } from "@/lib/customer";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const customer = await getAllCustomers();
 
-    return NextResponse.json(customer);
+    return NextResponse.json(parseSchemaOrThrow(customer, customerListSchema));
   } catch (error) {
     console.error("Error fetching customers:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch customers");
   }
 }
 
@@ -45,9 +49,9 @@ export async function POST(request: Request) {
         : undefined,
     });
 
-    return NextResponse.json(customer);
+    return NextResponse.json(parseSchemaOrThrow(customer, customerDetailSchema));
   } catch (error) {
     console.error("Error creating customer:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create customer");
   }
 }

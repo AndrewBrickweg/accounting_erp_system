@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { employeeSchema } from "@/schemas/employees";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  employeeDetailSchema,
+  employeeListSchema,
+  employeeSchema,
+} from "@/schemas/employees";
 import { getAllEmployees, createEmployee } from "@/lib/employee";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const employees = await getAllEmployees();
 
-    return NextResponse.json(employees);
+    return NextResponse.json(parseSchemaOrThrow(employees, employeeListSchema));
   } catch (error) {
     console.error("Error fetching employees:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch employees");
   }
 }
 
@@ -40,14 +44,14 @@ export async function POST(request: Request) {
       email,
       role,
       departmentId,
-      managerId: validation.data?.managerId || null,
+      managerId: validation.data?.managerId ?? null,
       isActive,
       terminatedAt,
     });
 
-    return NextResponse.json(employee);
+    return NextResponse.json(parseSchemaOrThrow(employee, employeeDetailSchema));
   } catch (error) {
     console.error("Error creating employee:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create employee");
   }
 }

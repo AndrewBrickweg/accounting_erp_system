@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { invoiceSchema } from "@/schemas/invoices";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  invoiceDetailSchema,
+  invoiceListSchema,
+  invoiceSchema,
+} from "@/schemas/invoices";
 import { getAllInvoices, createInvoice } from "@/lib/invoice";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const invoices = await getAllInvoices();
-    return NextResponse.json(invoices);
+    return NextResponse.json(parseSchemaOrThrow(invoices, invoiceListSchema));
   } catch (error) {
     console.error("Error fetching invoices:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch invoices");
   }
 }
 
@@ -46,12 +50,12 @@ export async function POST(request: Request) {
       vendorId,
       submittedById,
       departmentId,
-      currency: currency || null,
+      currency: currency ?? null,
     });
 
-    return NextResponse.json(invoice);
+    return NextResponse.json(parseSchemaOrThrow(invoice, invoiceDetailSchema));
   } catch (error) {
     console.error("Error creating invoice:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create invoice");
   }
 }

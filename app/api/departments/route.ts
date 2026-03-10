@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { departmentSchema } from "@/schemas/departments";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  departmentDetailSchema,
+  departmentListSchema,
+  departmentSchema,
+} from "@/schemas/departments";
 import { getAllDepartments, createDepartment } from "@/lib/department";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const departments = await getAllDepartments();
-    return NextResponse.json(departments);
+    return NextResponse.json(parseSchemaOrThrow(departments, departmentListSchema));
   } catch (error) {
     console.error("Error fetching departments:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch departments");
   }
 }
 
@@ -32,9 +36,12 @@ export async function POST(request: Request) {
       code,
     });
 
-    return NextResponse.json(department, { status: 201 });
+    return NextResponse.json(
+      parseSchemaOrThrow(department, departmentDetailSchema),
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating department:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create department");
   }
 }

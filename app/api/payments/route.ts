@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { paymentSchema } from "@/schemas/payments";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  paymentDetailSchema,
+  paymentListSchema,
+  paymentSchema,
+} from "@/schemas/payments";
 import { getAllPayments, createPayment } from "@/lib/payments";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const payments = await getAllPayments();
 
-    return NextResponse.json(payments);
+    return NextResponse.json(parseSchemaOrThrow(payments, paymentListSchema));
   } catch (error) {
     console.error("Error fetching payments:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch payments");
   }
 }
 
@@ -36,9 +40,9 @@ export async function POST(request: Request) {
       paidById,
     });
 
-    return NextResponse.json(payment);
+    return NextResponse.json(parseSchemaOrThrow(payment, paymentDetailSchema));
   } catch (error) {
     console.error("Error creating payment:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create payment");
   }
 }

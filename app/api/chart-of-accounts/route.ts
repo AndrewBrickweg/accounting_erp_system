@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { chartOfAccountSchema } from "@/schemas/chart-of-accounts";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  chartOfAccountDetailSchema,
+  chartOfAccountListSchema,
+  chartOfAccountSchema,
+} from "@/schemas/chart-of-accounts";
 import {
   getAllChartOfAccounts,
   createChartOfAccount,
 } from "@/lib/chart-of-account";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const chartOfAccounts = await getAllChartOfAccounts();
-    return NextResponse.json(chartOfAccounts);
+    return NextResponse.json(
+      parseSchemaOrThrow(chartOfAccounts, chartOfAccountListSchema)
+    );
   } catch (error) {
     console.error("Error fetching chart of accounts:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch chart of accounts");
   }
 }
 
@@ -36,9 +42,11 @@ export async function POST(request: Request) {
       isActive: isActive ?? true,
     });
 
-    return NextResponse.json(chartOfAccount);
+    return NextResponse.json(
+      parseSchemaOrThrow(chartOfAccount, chartOfAccountDetailSchema)
+    );
   } catch (error) {
     console.error("Error creating chart of account:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create chart of account");
   }
 }

@@ -1,34 +1,52 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { vendorSchema } from "@/schemas/vendors";
+import {
+  parsePositiveIntId,
+  parseSchemaOrThrow,
+  validateSchema,
+} from "@/lib/validate";
+import { vendorDetailSchema, vendorUpdateSchema } from "@/schemas/vendors";
 import { getVendorById, updateVendor, deleteVendor } from "@/lib/vendor";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const vendor = await getVendorById(parseInt(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    const vendor = await getVendorById(id);
 
     if (!vendor) {
       return handleError("Vendor not found", 404);
     }
 
-    return NextResponse.json(vendor);
+    return NextResponse.json(parseSchemaOrThrow(vendor, vendorDetailSchema));
   } catch (error) {
     console.error("Error fetching vendor:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch vendor");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
     const body = await request.json();
-    const validation = validateSchema(body, vendorSchema);
+    const validation = validateSchema(body, vendorUpdateSchema);
 
     if (!validation.success) {
       return handleError("Validation failed", 400, {
@@ -36,29 +54,30 @@ export async function PUT(
       });
     }
 
-    const updatedVendor = await updateVendor(parseInt(params.id), {
-      name: validation.data?.name,
-      contactName: validation.data?.contactName,
-      email: validation.data?.email,
-      phone: validation.data?.phone,
-      address: validation.data?.address,
-    });
-    return NextResponse.json(updatedVendor);
+    const updatedVendor = await updateVendor(id, validation.data!);
+    return NextResponse.json(parseSchemaOrThrow(updatedVendor, vendorDetailSchema));
   } catch (error) {
     console.error("Error updating vendor:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to update vendor");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const deletedVendor = await deleteVendor(parseInt(params.id));
-    return NextResponse.json(deletedVendor);
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    const deletedVendor = await deleteVendor(id);
+    return NextResponse.json(parseSchemaOrThrow(deletedVendor, vendorDetailSchema));
   } catch (error) {
     console.error("Error deleting vendor:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to delete vendor");
   }
 }

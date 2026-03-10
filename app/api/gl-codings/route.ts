@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { glCodingSchema } from "@/schemas/gl-codings";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  glCodingDetailSchema,
+  glCodingListSchema,
+  glCodingSchema,
+} from "@/schemas/gl-codings";
 import { getAllGlCodings, createGlCoding } from "@/lib/gl-coding";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const glCodings = await getAllGlCodings();
 
-    return NextResponse.json(glCodings);
+    return NextResponse.json(parseSchemaOrThrow(glCodings, glCodingListSchema));
   } catch (error) {
     console.error("Error fetching GL Codings:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch GL codings");
   }
 }
 
@@ -46,9 +50,9 @@ export async function POST(request: Request) {
       transactionId,
     });
 
-    return NextResponse.json(glCoding);
+    return NextResponse.json(parseSchemaOrThrow(glCoding, glCodingDetailSchema));
   } catch (error) {
     console.error("Error creating GL Coding:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create GL coding");
   }
 }

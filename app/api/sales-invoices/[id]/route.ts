@@ -1,36 +1,59 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { salesInvoiceUpdateSchema } from "@/schemas/sales-invoices";
+import {
+  parsePositiveIntId,
+  parseSchemaOrThrow,
+  validateSchema,
+} from "@/lib/validate";
+import {
+  salesInvoiceDetailSchema,
+  salesInvoiceUpdateSchema,
+} from "@/schemas/sales-invoices";
 import {
   getSalesInvoiceById,
   updateSalesInvoice,
   deleteSalesInvoice,
 } from "@/lib/sales-invoice";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const salesInvoice = await getSalesInvoiceById(Number(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    const salesInvoice = await getSalesInvoiceById(id);
 
     if (!salesInvoice) {
       return handleError("Sales Invoice not found", 404);
     }
 
-    return NextResponse.json(salesInvoice);
+    return NextResponse.json(
+      parseSchemaOrThrow(salesInvoice, salesInvoiceDetailSchema)
+    );
   } catch (error) {
     console.error("Error fetching sales invoice:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch sales invoice");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
     const body = await request.json();
     const validation = validateSchema(body, salesInvoiceUpdateSchema);
 
@@ -40,33 +63,35 @@ export async function PUT(
       });
     }
 
-    const updatedSalesInvoice = await updateSalesInvoice(Number(params.id), {
-      invoiceNumber: validation.data?.invoiceNumber,
-      invoiceDate: validation.data?.invoiceDate,
-      dueDate: validation.data?.dueDate,
-      totalAmount: validation.data?.totalAmount,
-      status: validation.data?.status,
-      customerId: validation.data?.customerId,
-      submittedById: validation.data?.submittedById,
-      currency: validation.data?.currency,
-      taxAmount: validation.data?.taxAmount || null,
-    });
-    return NextResponse.json(updatedSalesInvoice);
+    const updatedSalesInvoice = await updateSalesInvoice(
+      id,
+      validation.data!
+    );
+    return NextResponse.json(
+      parseSchemaOrThrow(updatedSalesInvoice, salesInvoiceDetailSchema)
+    );
   } catch (error) {
     console.error("Error updating sales invoice:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to update sales invoice");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteSalesInvoice(Number(params.id));
+    const { id: rawId } = await params;
+    const id = parsePositiveIntId(rawId);
+
+    if (id === null) {
+      return handleError("Invalid id parameter", 400);
+    }
+
+    await deleteSalesInvoice(id);
     return NextResponse.json({ message: "Sales Invoice deleted successfully" });
   } catch (error) {
     console.error("Error deleting sales invoice:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to delete sales invoice");
   }
 }

@@ -1,36 +1,41 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { employeeUpdateSchema } from "@/schemas/employees";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  employeeDetailSchema,
+  employeeUpdateSchema,
+} from "@/schemas/employees";
 import {
   getEmployeeById,
   updateEmployee,
   deleteEmployee,
 } from "@/lib/employee";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const employee = await getEmployeeById(params.id);
+    const { id } = await params;
+    const employee = await getEmployeeById(id);
 
     if (!employee) {
       return handleError("Employee not found", 404);
     }
 
-    return NextResponse.json(employee);
+    return NextResponse.json(parseSchemaOrThrow(employee, employeeDetailSchema));
   } catch (error) {
     console.error("Error fetching employee:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch employee");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validation = validateSchema(body, employeeUpdateSchema);
 
@@ -40,38 +45,32 @@ export async function PUT(
       });
     }
 
-    const updatedEmployee = await updateEmployee(params.id, {
-      firstName: validation.data?.firstName,
-      lastName: validation.data?.lastName,
-      email: validation.data?.email,
-      role: validation.data?.role,
-      departmentId: validation.data?.departmentId,
-      managerId: validation.data?.managerId || null,
-      isActive: validation.data?.isActive,
-      terminatedAt: validation.data?.terminatedAt || null,
-    });
+    const updatedEmployee = await updateEmployee(id, validation.data!);
 
-    return NextResponse.json(updatedEmployee);
+    return NextResponse.json(
+      parseSchemaOrThrow(updatedEmployee, employeeDetailSchema)
+    );
   } catch (error) {
     console.error("Error updating employee:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to update employee");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const employee = await deleteEmployee(params.id);
+    const { id } = await params;
+    const employee = await deleteEmployee(id);
 
     if (!employee) {
       return handleError("Employee not found", 404);
     }
 
-    return NextResponse.json(employee);
+    return NextResponse.json(parseSchemaOrThrow(employee, employeeDetailSchema));
   } catch (error) {
     console.error("Error deleting employee:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to delete employee");
   }
 }

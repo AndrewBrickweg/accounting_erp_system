@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { vendorSchema } from "@/schemas/vendors";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import { vendorDetailSchema, vendorListSchema, vendorSchema } from "@/schemas/vendors";
 import { getAllVendors, createVendor } from "@/lib/vendor";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET() {
   try {
     const vendors = await getAllVendors();
-    return NextResponse.json(vendors);
+    return NextResponse.json(parseSchemaOrThrow(vendors, vendorListSchema));
   } catch (error) {
     console.error("Error fetching vendors:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch vendors");
   }
 }
 
@@ -34,9 +34,9 @@ export async function POST(request: Request) {
       address,
     });
 
-    return NextResponse.json(vendor);
+    return NextResponse.json(parseSchemaOrThrow(vendor, vendorDetailSchema));
   } catch (error) {
     console.error("Error creating vendor:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to create vendor");
   }
 }

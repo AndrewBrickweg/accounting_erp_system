@@ -1,36 +1,43 @@
 import { NextResponse } from "next/server";
-import { validateSchema } from "@/lib/validate";
-import { transactionSchemaUpdate } from "@/schemas/transactions";
+import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
+import {
+  transactionDetailSchema,
+  transactionSchemaUpdate,
+} from "@/schemas/transactions";
 import {
   getTransactionById,
   updateTransaction,
   deleteTransaction,
 } from "@/lib/transaction";
-import { handleError } from "@/lib/error";
+import { handleApiError, handleError } from "@/lib/error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const transaction = await getTransactionById(params.id);
+    const { id } = await params;
+    const transaction = await getTransactionById(id);
 
     if (!transaction) {
       return handleError("Transaction not found", 404);
     }
 
-    return NextResponse.json(transaction);
+    return NextResponse.json(
+      parseSchemaOrThrow(transaction, transactionDetailSchema)
+    );
   } catch (error) {
     console.error("Error fetching transaction:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to fetch transaction");
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validation = validateSchema(body, transactionSchemaUpdate);
 
@@ -40,40 +47,34 @@ export async function PUT(
       });
     }
 
-    const updatedTransaction = await updateTransaction(params.id, {
-      date: validation.data?.date,
-      memo: validation.data?.memo,
-      referenceNumber: validation.data?.referenceNumber,
-      type: validation.data?.type,
-      source: validation.data?.source,
-      status: validation.data?.status,
-      isPosted: validation.data?.isPosted,
-      postedAt: validation.data?.postedAt || null,
-    });
+    const updatedTransaction = await updateTransaction(id, validation.data!);
 
-    return NextResponse.json(updatedTransaction);
+    return NextResponse.json(
+      parseSchemaOrThrow(updatedTransaction, transactionDetailSchema)
+    );
   } catch (error) {
     console.error("Error updating transaction:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to update transaction");
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const transaction = await getTransactionById(params.id);
+    const { id } = await params;
+    const transaction = await getTransactionById(id);
 
     if (!transaction) {
       return handleError("Transaction not found", 404);
     }
 
-    await deleteTransaction(params.id);
+    await deleteTransaction(id);
 
     return NextResponse.json({ message: "Transaction deleted successfully" });
   } catch (error) {
     console.error("Error deleting transaction:", error);
-    return handleError("Internal Server Error", 500);
+    return handleApiError(error, "Failed to delete transaction");
   }
 }
