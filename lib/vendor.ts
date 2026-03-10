@@ -1,9 +1,17 @@
 import prisma from "@/lib/prisma";
 
+type AddressInput = {
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+};
+
 export async function getAllVendors() {
   return await prisma.vendor.findMany({
     include: {
-      employees: true,
+      invoices: true,
       address: true,
     },
   });
@@ -20,13 +28,7 @@ export async function createVendor(data: {
   contactName: string;
   email: string;
   phone: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    country?: string;
-  };
+  address?: AddressInput;
 }) {
   return await prisma.vendor.create({
     data: {
@@ -36,7 +38,7 @@ export async function createVendor(data: {
       phone: data.phone,
       address: data.address ? { create: data.address } : undefined,
     },
-    include: { address: true, employees: true },
+    include: { address: true, invoices: true },
   });
 }
 
@@ -47,18 +49,26 @@ export async function updateVendor(
     contactName?: string;
     email?: string;
     phone?: string;
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zip?: string;
-      country?: string;
-    };
+    address?: AddressInput;
   }
 ) {
+  const { address, ...rest } = data;
+
   return await prisma.vendor.update({
     where: { id },
-    data,
+    data: {
+      ...rest,
+      ...(address
+        ? {
+            address: {
+              upsert: {
+                create: address,
+                update: address,
+              },
+            },
+          }
+        : {}),
+    },
   });
 }
 

@@ -4,20 +4,18 @@ export const glCodingSchema = z.object({
   accountId: z.number().int().positive("Account ID must be a positive integer"),
   description: z.string().min(1, "Description is required"),
   amount: z.number().min(0, "Amount must be a non-negative number"),
-  invoiceId: z.number().int().nullable(),
-  departmentId: z.number().int().nullable(),
-  createdAt: z.coerce.date(),
+  invoiceId: z.number().int().nullable().optional(),
+  departmentId: z.number().int().nullable().optional(),
   memo: z.string().nullable().optional(),
   transactionId: z.string().nullable().optional(),
   type: z.enum(["debit", "credit"]),
-  updatedAt: z.coerce.date(),
 });
 
 export const glCodingUpdateSchema = glCodingSchema.partial();
 
 export const glCodingListSchema = z.array(
   z.object({
-    id: z.string(),
+    id: z.number(),
     accountId: z.number(),
     description: z.string(),
     amount: z.number(),
@@ -26,13 +24,13 @@ export const glCodingListSchema = z.array(
     createdAt: z.coerce.date(),
     memo: z.string().nullable().optional(),
     transactionId: z.string().nullable().optional(),
-    type: z.enum(["debit", "credit"]),
+    type: z.enum(["debit", "credit"]).nullable().optional(),
     updatedAt: z.coerce.date(),
   })
 );
 
 export const glCodingDetailSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   accountId: z.number(),
   description: z.string(),
   amount: z.number(),
@@ -41,7 +39,7 @@ export const glCodingDetailSchema = z.object({
   createdAt: z.coerce.date(),
   memo: z.string().nullable().optional(),
   transactionId: z.string().nullable().optional(),
-  type: z.enum(["debit", "credit"]),
+  type: z.enum(["debit", "credit"]).nullable().optional(),
   updatedAt: z.coerce.date(),
 });
 

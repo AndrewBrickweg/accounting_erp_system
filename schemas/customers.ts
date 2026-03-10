@@ -1,24 +1,23 @@
 import { z } from "zod";
 
 export const addressSchema = z.object({
-  street: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  country: z.string().optional(),
+  street: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+  zip: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
 });
 
-export const customerSchema = z
-  .object({
-    firstName: z.string().min(1).optional(),
-    lastName: z.string().min(1).optional(),
-    companyName: z.string().optional(),
-    email: z.email("Invalid email address"),
-    phone: z.string().optional(),
-    address: addressSchema.optional(),
-    createdAt: z.date().optional(),
-    updatedAt: z.date().optional(),
-  })
+const customerBaseSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  companyName: z.string().optional(),
+  email: z.email("Invalid email address"),
+  phone: z.string().optional(),
+  address: addressSchema.optional(),
+});
+
+export const customerSchema = customerBaseSchema
   .refine(
     (data) =>
       (!!data.companyName && !data.firstName && !data.lastName) ||
@@ -30,30 +29,30 @@ export const customerSchema = z
     }
   );
 
-export const customerUpdateSchema = customerSchema.partial();
+export const customerUpdateSchema = customerBaseSchema.partial();
 
 export const customerListSchema = z.array(
   z.object({
-    id: z.number(),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    companyName: z.string().optional(),
+    id: z.string(),
+    firstName: z.string().nullable().optional(),
+    lastName: z.string().nullable().optional(),
+    companyName: z.string().nullable().optional(),
     email: z.email(),
-    phone: z.string().optional(),
-    address: addressSchema.optional(),
+    phone: z.string().nullable().optional(),
+    address: addressSchema.nullable().optional(),
   })
 );
 
 export const customerDetailSchema = z.object({
-  id: z.number(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  companyName: z.string().optional(),
+  id: z.string(),
+  firstName: z.string().nullable().optional(),
+  lastName: z.string().nullable().optional(),
+  companyName: z.string().nullable().optional(),
   email: z.email(),
-  phone: z.string().optional(),
-  address: addressSchema.optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+  phone: z.string().nullable().optional(),
+  address: addressSchema.nullable().optional(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export type CustomerInput = z.infer<typeof customerSchema>;

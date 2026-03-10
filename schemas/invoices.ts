@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-//need to update prisma schema to include line items
 export const invoiceSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   invoiceDate: z.coerce.date(),
@@ -13,16 +12,14 @@ export const invoiceSchema = z.object({
     .number()
     .int()
     .positive("Department ID must be a positive integer"),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-  currency: z.string().nullable(),
+  currency: z.string().nullable().optional(),
 });
 
 export const invoiceUpdateSchema = invoiceSchema.partial();
 
 export const invoiceListSchema = z.array(
   z.object({
-    id: z.string(),
+    id: z.number(),
     invoiceNumber: z.string(),
     invoiceDate: z.coerce.date(),
     dueDate: z.coerce.date(),
@@ -38,7 +35,7 @@ export const invoiceListSchema = z.array(
 );
 
 export const invoiceDetailSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   invoiceNumber: z.string(),
   invoiceDate: z.coerce.date(),
   dueDate: z.coerce.date(),

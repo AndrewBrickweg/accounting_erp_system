@@ -8,66 +8,66 @@ export const salesInvoiceSchema = z.object({
   status: z.enum(["pending", "paid", "overdue"]),
   customerId: z.string().min(1, "Customer ID is required"),
   submittedById: z.string().min(1, "Submitted By ID is required"),
-  createdAt: z.coerce.date(),
   currency: z.string().min(1, "Currency is required"),
   taxAmount: z
     .number()
     .nonnegative("Tax amount must be non-negative")
+    .nullable()
     .optional(),
-  updatedAt: z.coerce.date(),
 });
 
 export const salesInvoiceUpdateSchema = salesInvoiceSchema.partial();
 
+const salesInvoiceCustomerSchema = z.object({
+  id: z.string(),
+  companyName: z.string().nullable().optional(),
+  firstName: z.string().nullable().optional(),
+  lastName: z.string().nullable().optional(),
+  email: z.string(),
+  phone: z.string().nullable().optional(),
+});
+
+const salesInvoiceSubmitterSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string(),
+  role: z.enum(["admin", "manager", "staff"]).optional(),
+});
+
 export const salesInvoiceListSchema = z.array(
   z.object({
-    id: z.string(),
+    id: z.number(),
     invoiceNumber: z.string(),
     invoiceDate: z.coerce.date(),
     dueDate: z.coerce.date(),
     totalAmount: z.number(),
     status: z.enum(["pending", "paid", "overdue"]),
-    customer: z.object({
-      id: z.string(),
-      name: z.string(),
-    }),
-    submittedBy: z.object({
-      id: z.string(),
-      firstName: z.string(),
-      lastName: z.string(),
-    }),
+    customerId: z.string(),
+    submittedById: z.string(),
+    customer: salesInvoiceCustomerSchema,
+    submittedBy: salesInvoiceSubmitterSchema,
     createdAt: z.coerce.date(),
-    currency: z.string(),
-    taxAmount: z.number().optional(),
+    currency: z.string().nullable().optional(),
+    taxAmount: z.number().nullable().optional(),
     updatedAt: z.coerce.date(),
   })
 );
 
 export const salesInvoiceDetailSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   invoiceNumber: z.string(),
   invoiceDate: z.coerce.date(),
   dueDate: z.coerce.date(),
   totalAmount: z.number(),
   status: z.enum(["pending", "paid", "overdue"]),
   customerId: z.string(),
-  customer: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    address: z.string().optional(),
-  }),
+  customer: salesInvoiceCustomerSchema,
   submittedById: z.string(),
-  submittedBy: z.object({
-    id: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-    email: z.string().optional(),
-  }),
+  submittedBy: salesInvoiceSubmitterSchema,
   createdAt: z.coerce.date(),
-  currency: z.string(),
-  taxAmount: z.number().optional(),
+  currency: z.string().nullable().optional(),
+  taxAmount: z.number().nullable().optional(),
   updatedAt: z.coerce.date(),
 });
 

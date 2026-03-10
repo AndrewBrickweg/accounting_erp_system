@@ -2,13 +2,13 @@ import prisma from "@/lib/prisma";
 
 export async function getAllSalesInvoices() {
   return await prisma.salesInvoice.findMany({
-    include: { customer: true, items: true },
+    include: { customer: true, submittedBy: true },
   });
 }
 export async function getSalesInvoiceById(id: number) {
   return await prisma.salesInvoice.findUnique({
     where: { id },
-    include: { customer: true, items: true },
+    include: { customer: true, submittedBy: true },
   });
 }
 
@@ -23,7 +23,10 @@ export async function createSalesInvoice(data: {
   currency: string;
   taxAmount?: number | null;
 }) {
-  return await prisma.salesInvoice.create({ data });
+  return await prisma.salesInvoice.create({
+    data,
+    include: { customer: true, submittedBy: true },
+  });
 }
 
 export async function updateSalesInvoice(
@@ -43,13 +46,13 @@ export async function updateSalesInvoice(
   return await prisma.salesInvoice.update({
     where: { id },
     data,
-    include: { customer: true, items: true },
+    include: { customer: true, submittedBy: true },
   });
 }
 
 export async function deleteSalesInvoice(id: number) {
   return await prisma.salesInvoice.delete({
     where: { id },
-    include: { customer: true, items: true },
+    include: { customer: true, submittedBy: true },
   });
 }

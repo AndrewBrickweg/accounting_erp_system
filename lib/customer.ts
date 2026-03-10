@@ -1,13 +1,21 @@
 import prisma from "@/lib/prisma";
 
+type AddressInput = {
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+};
+
 export async function getAllCustomers() {
-  return await prisma.Customer.findMany({
+  return await prisma.customer.findMany({
     include: { address: true },
   });
 }
 
-export async function getCustomerById(id: number) {
-  return await prisma.Customer.findUnique({
+export async function getCustomerById(id: string) {
+  return await prisma.customer.findUnique({
     where: { id },
     include: { address: true },
   });
@@ -19,15 +27,9 @@ export async function createCustomer(data: {
   companyName?: string;
   email: string;
   phone?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    country?: string;
-  };
+  address?: AddressInput;
 }) {
-  return await prisma.Customer.create({
+  return await prisma.customer.create({
     data: {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -36,36 +38,44 @@ export async function createCustomer(data: {
       phone: data.phone,
       address: data.address ? { create: data.address } : undefined,
     },
-    include: { address: true, employees: true },
+    include: { address: true },
   });
 }
 
 export async function updateCustomer(
-  id: number,
+  id: string,
   data: {
     firstName?: string;
     lastName?: string;
     companyName?: string;
     email?: string;
     phone?: string;
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zip?: string;
-      country?: string;
-    };
+    address?: AddressInput;
   }
 ) {
-  return await prisma.Customer.update({
+  const { address, ...rest } = data;
+
+  return await prisma.customer.update({
     where: { id },
-    data,
+    data: {
+      ...rest,
+      ...(address
+        ? {
+            address: {
+              upsert: {
+                create: address,
+                update: address,
+              },
+            },
+          }
+        : {}),
+    },
     include: { address: true },
   });
 }
 
-export async function deleteCustomer(id: number) {
-  return await prisma.Customer.delete({
+export async function deleteCustomer(id: string) {
+  return await prisma.customer.delete({
     where: { id },
     include: { address: true },
   });

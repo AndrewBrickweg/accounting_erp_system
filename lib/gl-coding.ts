@@ -1,11 +1,11 @@
 import prisma from "@/lib/prisma";
 
 export async function getAllGlCodings() {
-  return await prisma.glcoding.findMany({});
+  return await prisma.gLCoding.findMany({});
 }
 
 export async function getGlCodingById(id: number) {
-  return await prisma.glcoding.findUnique({
+  return await prisma.gLCoding.findUnique({
     where: { id },
   });
 }
@@ -20,7 +20,7 @@ export async function createGlCoding(data: {
   transactionId?: string | null;
   type: "debit" | "credit";
 }) {
-  return await prisma.glcoding.create({ data });
+  return await prisma.gLCoding.create({ data });
 }
 
 export async function updateGlCoding(
@@ -36,14 +36,14 @@ export async function updateGlCoding(
     type?: "debit" | "credit";
   }
 ) {
-  return await prisma.glcoding.update({
+  return await prisma.gLCoding.update({
     where: { id },
     data,
   });
 }
 
 export async function deleteGlCoding(id: number) {
-  return await prisma.glcoding.delete({
+  return await prisma.gLCoding.delete({
     where: { id },
   });
 }

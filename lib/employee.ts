@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { Role } from "@prisma/client";
 
 export async function getAllEmployees() {
   return await prisma.employee.findMany({
@@ -17,13 +18,16 @@ export async function createEmployee(data: {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  role: Role;
   departmentId: number;
   managerId?: string | null;
   isActive?: boolean;
   terminatedAt?: Date | null;
 }) {
-  return await prisma.employee.create({ data });
+  return await prisma.employee.create({
+    data,
+    include: { department: true, manager: true },
+  });
 }
 
 export async function updateEmployee(
@@ -32,7 +36,7 @@ export async function updateEmployee(
     firstName?: string;
     lastName?: string;
     email?: string;
-    role?: string;
+    role?: Role;
     departmentId?: number;
     managerId?: string | null;
     isActive?: boolean;

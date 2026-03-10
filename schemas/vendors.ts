@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const addressSchema = z.object({
-  street: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  country: z.string().optional(),
+  street: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+  zip: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
 });
 
 export const vendorSchema = z.object({
@@ -19,34 +19,24 @@ export const vendorSchema = z.object({
 export const vendorUpdateSchema = vendorSchema.partial();
 
 export const vendorDetailSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   name: z.string(),
   contactName: z.string(),
-  email: z.string(),
+  email: z.email(),
   phone: z.string(),
-  address: addressSchema.optional(),
-  employees: z
-    .array(
-      z.object({
-        id: z.string(),
-        firstName: z.string(),
-        lastName: z.string(),
-        email: z.string(),
-        role: z.string(),
-        departmentId: z.number(),
-      })
-    )
-    .optional(),
+  isActive: z.boolean().optional(),
+  address: addressSchema.nullable().optional(),
 });
 
 export const vendorListSchema = z.array(
   z.object({
-    id: z.string(),
+    id: z.number(),
     name: z.string(),
     contactName: z.string(),
-    email: z.string(),
+    email: z.email(),
     phone: z.string(),
-    address: addressSchema.optional(),
+    isActive: z.boolean().optional(),
+    address: addressSchema.nullable().optional(),
   })
 );
 

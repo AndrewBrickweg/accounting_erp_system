@@ -11,7 +11,7 @@ export const employeeSchema = z.object({
     .positive("Department ID must be a positive integer"),
   managerId: z.string().optional().nullable(),
   isActive: z.boolean().optional(),
-  terminatedAt: z.date().nullable().optional(),
+  terminatedAt: z.coerce.date().nullable().optional(),
 });
 
 export const employeeUpdateSchema = employeeSchema.partial();
@@ -21,8 +21,8 @@ export const employeeListSchema = z.array(
     id: z.string(),
     firstName: z.string(),
     lastName: z.string(),
-    email: z.string(),
-    role: z.string(),
+    email: z.email(),
+    role: z.enum(["admin", "manager", "staff"]),
     department: z.object({
       name: z.string(),
     }),
@@ -35,7 +35,7 @@ export const employeeListSchema = z.array(
       .optional()
       .nullable(),
     isActive: z.boolean().optional(),
-    terminatedAt: z.date().nullable().optional(),
+    terminatedAt: z.coerce.date().nullable().optional(),
   })
 );
 
@@ -43,11 +43,11 @@ export const employeeDetailSchema = z.object({
   id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  email: z.string(),
+  email: z.email(),
   role: z.enum(["admin", "manager", "staff"]),
-  departmentId: z.string(),
+  departmentId: z.number(),
   department: z.object({
-    id: z.string(),
+    id: z.number(),
     name: z.string(),
   }),
   managerId: z.string().nullable().optional(),
@@ -60,7 +60,7 @@ export const employeeDetailSchema = z.object({
     .nullable()
     .optional(),
   isActive: z.boolean().optional(),
-  terminatedAt: z.date().nullable().optional(),
+  terminatedAt: z.coerce.date().nullable().optional(),
 });
 
 export type EmployeeInput = z.infer<typeof employeeSchema>;

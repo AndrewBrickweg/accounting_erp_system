@@ -21,9 +21,9 @@ export async function createDepartment(data: {
 export async function updateDepartment(
   id: number,
   data: {
-    name: string;
+    name?: string;
     managerId?: string | null;
-    code: string;
+    code?: string;
   }
 ) {
   return await prisma.department.update({

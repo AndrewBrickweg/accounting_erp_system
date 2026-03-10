@@ -2,14 +2,14 @@ import prisma from "@/lib/prisma";
 
 export async function getAllPayments() {
   return await prisma.payment.findMany({
-    include: { employee: true, method: true },
+    include: { paidBy: true, invoice: true },
   });
 }
 
 export async function getPaymentById(id: number) {
   return await prisma.payment.findUnique({
     where: { id },
-    include: { employee: true, method: true },
+    include: { paidBy: true, invoice: true },
   });
 }
 
@@ -36,13 +36,13 @@ export async function updatePayment(
   return await prisma.payment.update({
     where: { id },
     data,
-    include: { employee: true, method: true },
+    include: { paidBy: true, invoice: true },
   });
 }
 
 export async function deletePayment(id: number) {
   return await prisma.payment.delete({
     where: { id },
-    include: { employee: true, method: true },
+    include: { paidBy: true, invoice: true },
   });
 }

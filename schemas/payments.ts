@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const paymentSchema = z.object({
   amountPaid: z.number().positive("Amount paid must be a positive number"),
-  paymentDate: z.date("Payment date must be a valid date"),
+  paymentDate: z.coerce.date(),
   method: z.enum(["credit_card", "ach", "wire", "check"], {
     message: "Payment method must be one of: credit_card, ach, wire, check",
   }),
@@ -13,26 +13,22 @@ export const paymentSchema = z.object({
 export const paymentUpdateSchema = paymentSchema.partial();
 
 export const paymentDetailSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   amountPaid: z.number(),
-  paymentDate: z.date(),
+  paymentDate: z.coerce.date(),
   method: z.enum(["credit_card", "ach", "wire", "check"]),
   invoiceId: z.number(),
   paidById: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
 });
 
 export const paymentListSchema = z.array(
   z.object({
-    id: z.string(),
+    id: z.number(),
     amountPaid: z.number(),
-    paymentDate: z.date(),
+    paymentDate: z.coerce.date(),
     method: z.enum(["credit_card", "ach", "wire", "check"]),
     invoiceId: z.number(),
     paidById: z.string(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
   })
 );
 
