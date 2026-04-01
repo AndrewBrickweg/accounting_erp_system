@@ -6,7 +6,8 @@ import {
   paymentSchema,
 } from "@/schemas/payments";
 import { getAllPayments, createPayment } from "@/lib/payments";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -25,9 +26,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, paymentSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const { amountPaid, paymentDate, method, invoiceId, paidById } =
@@ -40,7 +39,8 @@ export async function POST(request: Request) {
       paidById,
     });
 
-    return NextResponse.json(parseSchemaOrThrow(payment, paymentDetailSchema));
+    const response = parseSchemaOrThrow(payment, paymentDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating payment:", error);
     return handleApiError(error, "Failed to create payment");

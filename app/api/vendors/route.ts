@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { parseSchemaOrThrow, validateSchema } from "@/lib/validate";
 import { vendorDetailSchema, vendorListSchema, vendorSchema } from "@/schemas/vendors";
 import { getAllVendors, createVendor } from "@/lib/vendor";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -20,9 +21,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, vendorSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const { name, contactName, email, phone, address } = validation.data!;
@@ -34,7 +33,8 @@ export async function POST(request: Request) {
       address,
     });
 
-    return NextResponse.json(parseSchemaOrThrow(vendor, vendorDetailSchema));
+    const response = parseSchemaOrThrow(vendor, vendorDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating vendor:", error);
     return handleApiError(error, "Failed to create vendor");

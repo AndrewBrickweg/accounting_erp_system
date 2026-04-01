@@ -13,7 +13,13 @@ import {
   updateChartOfAccount,
   deleteChartOfAccount,
 } from "@/lib/chart-of-account";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleBadRequest,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
+import { noContent } from "@/lib/http";
 
 export async function GET(
   request: Request,
@@ -24,13 +30,13 @@ export async function GET(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const chartOfAccount = await getChartOfAccountById(id);
 
     if (!chartOfAccount) {
-      return handleError("Chart of Account not found", 404);
+      return handleNotFound("Chart of Account not found");
     }
 
     return NextResponse.json(
@@ -42,7 +48,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -51,16 +57,14 @@ export async function PUT(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const body = await request.json();
     const validation = validateSchema(body, chartOfAccountUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedChartOfAccount = await updateChartOfAccount(id, validation.data!);
@@ -83,13 +87,11 @@ export async function DELETE(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     await deleteChartOfAccount(id);
-    return NextResponse.json({
-      message: "Chart of Account deleted successfully",
-    });
+    return noContent();
   } catch (error) {
     console.error("Error deleting chart of account:", error);
     return handleApiError(error, "Failed to delete chart of account");

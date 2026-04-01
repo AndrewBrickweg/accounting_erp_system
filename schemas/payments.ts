@@ -1,7 +1,11 @@
 import { z } from "zod";
+import {
+  decimalStringSchema,
+  positiveMoneySchema,
+} from "./common.ts";
 
 export const paymentSchema = z.object({
-  amountPaid: z.number().positive("Amount paid must be a positive number"),
+  amountPaid: positiveMoneySchema("Amount paid"),
   paymentDate: z.coerce.date(),
   method: z.enum(["credit_card", "ach", "wire", "check"], {
     message: "Payment method must be one of: credit_card, ach, wire, check",
@@ -14,7 +18,7 @@ export const paymentUpdateSchema = paymentSchema.partial();
 
 export const paymentDetailSchema = z.object({
   id: z.number(),
-  amountPaid: z.number(),
+  amountPaid: decimalStringSchema,
   paymentDate: z.coerce.date(),
   method: z.enum(["credit_card", "ach", "wire", "check"]),
   invoiceId: z.number(),
@@ -24,7 +28,7 @@ export const paymentDetailSchema = z.object({
 export const paymentListSchema = z.array(
   z.object({
     id: z.number(),
-    amountPaid: z.number(),
+    amountPaid: decimalStringSchema,
     paymentDate: z.coerce.date(),
     method: z.enum(["credit_card", "ach", "wire", "check"]),
     invoiceId: z.number(),

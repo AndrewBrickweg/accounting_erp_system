@@ -11,9 +11,13 @@ import {
 import {
   getSalesInvoiceById,
   updateSalesInvoice,
-  deleteSalesInvoice,
 } from "@/lib/sales-invoice";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleBadRequest,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
 
 export async function GET(
   request: Request,
@@ -24,13 +28,13 @@ export async function GET(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const salesInvoice = await getSalesInvoiceById(id);
 
     if (!salesInvoice) {
-      return handleError("Sales Invoice not found", 404);
+      return handleNotFound("Sales Invoice not found");
     }
 
     return NextResponse.json(
@@ -42,7 +46,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -51,16 +55,14 @@ export async function PUT(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const body = await request.json();
     const validation = validateSchema(body, salesInvoiceUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedSalesInvoice = await updateSalesInvoice(
@@ -73,25 +75,5 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating sales invoice:", error);
     return handleApiError(error, "Failed to update sales invoice");
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: rawId } = await params;
-    const id = parsePositiveIntId(rawId);
-
-    if (id === null) {
-      return handleError("Invalid id parameter", 400);
-    }
-
-    await deleteSalesInvoice(id);
-    return NextResponse.json({ message: "Sales Invoice deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting sales invoice:", error);
-    return handleApiError(error, "Failed to delete sales invoice");
   }
 }

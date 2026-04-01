@@ -13,7 +13,13 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "@/lib/department";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleBadRequest,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
+import { noContent } from "@/lib/http";
 
 export async function GET(
   request: Request,
@@ -24,13 +30,13 @@ export async function GET(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const department = await getDepartmentById(id);
 
     if (!department) {
-      return handleError("Department not found", 404);
+      return handleNotFound("Department not found");
     }
 
     return NextResponse.json(parseSchemaOrThrow(department, departmentDetailSchema));
@@ -40,7 +46,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -49,16 +55,14 @@ export async function PUT(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const body = await request.json();
     const validation = validateSchema(body, departmentUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedDepartment = await updateDepartment(id, validation.data!);
@@ -81,12 +85,11 @@ export async function DELETE(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     await deleteDepartment(id);
-
-    return NextResponse.json({ message: "Department deleted successfully" });
+    return noContent();
   } catch (error) {
     console.error("Error deleting department:", error);
     return handleApiError(error, "Failed to delete department");

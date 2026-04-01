@@ -7,6 +7,13 @@ export async function getAllTransactions() {
 export async function getTransactionById(id: string) {
   return await prisma.transaction.findUnique({
     where: { id },
+    include: {
+      entries: {
+        include: {
+          account: true,
+        },
+      },
+    },
   });
 }
 
@@ -14,13 +21,21 @@ export async function createTransaction(data: {
   date?: Date;
   memo?: string;
   referenceNumber?: string;
-  type: string;
+  type: "journal" | "payment" | "receipt" | "transfer";
   source?: string;
-  status?: string;
-  isPosted?: boolean;
+  status?: "draft" | "posted" | "void";
   postedAt?: Date | null;
 }) {
-  return await prisma.transaction.create({ data });
+  return await prisma.transaction.create({
+    data,
+    include: {
+      entries: {
+        include: {
+          account: true,
+        },
+      },
+    },
+  });
 }
 
 export async function updateTransaction(
@@ -29,16 +44,22 @@ export async function updateTransaction(
     date?: Date;
     memo?: string;
     referenceNumber?: string;
-    type?: string;
+    type?: "journal" | "payment" | "receipt" | "transfer";
     source?: string;
-    status?: string;
-    isPosted?: boolean;
+    status?: "draft" | "posted" | "void";
     postedAt?: Date | null;
   }
 ) {
   return await prisma.transaction.update({
     where: { id },
     data,
+    include: {
+      entries: {
+        include: {
+          account: true,
+        },
+      },
+    },
   });
 }
 

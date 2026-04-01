@@ -9,7 +9,8 @@ import {
   getAllChartOfAccounts,
   createChartOfAccount,
 } from "@/lib/chart-of-account";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -29,9 +30,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, chartOfAccountSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const { accountNumber, name, type, isActive } = validation.data!;
@@ -42,9 +41,11 @@ export async function POST(request: Request) {
       isActive: isActive ?? true,
     });
 
-    return NextResponse.json(
-      parseSchemaOrThrow(chartOfAccount, chartOfAccountDetailSchema)
+    const response = parseSchemaOrThrow(
+      chartOfAccount,
+      chartOfAccountDetailSchema
     );
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating chart of account:", error);
     return handleApiError(error, "Failed to create chart of account");

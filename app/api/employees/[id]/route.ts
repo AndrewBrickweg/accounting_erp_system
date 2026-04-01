@@ -9,7 +9,12 @@ import {
   updateEmployee,
   deleteEmployee,
 } from "@/lib/employee";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
+import { noContent } from "@/lib/http";
 
 export async function GET(
   request: Request,
@@ -20,7 +25,7 @@ export async function GET(
     const employee = await getEmployeeById(id);
 
     if (!employee) {
-      return handleError("Employee not found", 404);
+      return handleNotFound("Employee not found");
     }
 
     return NextResponse.json(parseSchemaOrThrow(employee, employeeDetailSchema));
@@ -30,7 +35,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -40,9 +45,7 @@ export async function PUT(
     const validation = validateSchema(body, employeeUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedEmployee = await updateEmployee(id, validation.data!);
@@ -62,13 +65,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const employee = await deleteEmployee(id);
-
-    if (!employee) {
-      return handleError("Employee not found", 404);
-    }
-
-    return NextResponse.json(parseSchemaOrThrow(employee, employeeDetailSchema));
+    await deleteEmployee(id);
+    return noContent();
   } catch (error) {
     console.error("Error deleting employee:", error);
     return handleApiError(error, "Failed to delete employee");

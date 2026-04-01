@@ -6,7 +6,8 @@ import {
   departmentSchema,
 } from "@/schemas/departments";
 import { getAllDepartments, createDepartment } from "@/lib/department";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -24,9 +25,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, departmentSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const { name, managerId, code } = validation.data!;
@@ -36,10 +35,8 @@ export async function POST(request: Request) {
       code,
     });
 
-    return NextResponse.json(
-      parseSchemaOrThrow(department, departmentDetailSchema),
-      { status: 201 }
-    );
+    const response = parseSchemaOrThrow(department, departmentDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating department:", error);
     return handleApiError(error, "Failed to create department");

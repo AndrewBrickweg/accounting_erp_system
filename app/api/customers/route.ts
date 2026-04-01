@@ -6,7 +6,8 @@ import {
   customerSchema,
 } from "@/schemas/customers";
 import { getAllCustomers, createCustomer } from "@/lib/customer";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -25,9 +26,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, customerSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const { firstName, lastName, companyName, email, phone, address } =
@@ -49,7 +48,8 @@ export async function POST(request: Request) {
         : undefined,
     });
 
-    return NextResponse.json(parseSchemaOrThrow(customer, customerDetailSchema));
+    const response = parseSchemaOrThrow(customer, customerDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating customer:", error);
     return handleApiError(error, "Failed to create customer");

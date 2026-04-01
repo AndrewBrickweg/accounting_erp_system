@@ -7,9 +7,12 @@ import {
 import {
   getTransactionById,
   updateTransaction,
-  deleteTransaction,
 } from "@/lib/transaction";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
 
 export async function GET(
   request: Request,
@@ -20,7 +23,7 @@ export async function GET(
     const transaction = await getTransactionById(id);
 
     if (!transaction) {
-      return handleError("Transaction not found", 404);
+      return handleNotFound("Transaction not found");
     }
 
     return NextResponse.json(
@@ -32,7 +35,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -42,9 +45,7 @@ export async function PUT(
     const validation = validateSchema(body, transactionSchemaUpdate);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedTransaction = await updateTransaction(id, validation.data!);
@@ -55,26 +56,5 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating transaction:", error);
     return handleApiError(error, "Failed to update transaction");
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const transaction = await getTransactionById(id);
-
-    if (!transaction) {
-      return handleError("Transaction not found", 404);
-    }
-
-    await deleteTransaction(id);
-
-    return NextResponse.json({ message: "Transaction deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting transaction:", error);
-    return handleApiError(error, "Failed to delete transaction");
   }
 }

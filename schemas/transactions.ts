@@ -1,9 +1,9 @@
 import { z } from "zod";
+import { decimalStringSchema } from "./common.ts";
 
-export const transactionSchema = z.object({
+const transactionBaseSchema = z.object({
   date: z.coerce.date().optional(),
   memo: z.string().min(1, "Memo is required").optional(),
-  isPosted: z.boolean().optional(),
   postedAt: z.coerce.date().nullable().optional(),
   referenceNumber: z.string().optional(),
   source: z.string().optional(),
@@ -11,13 +11,43 @@ export const transactionSchema = z.object({
   type: z.enum(["journal", "payment", "receipt", "transfer"]),
 });
 
-export const transactionSchemaUpdate = transactionSchema.partial();
+function hasConsistentPostingState(data: {
+  postedAt?: Date | null;
+  status?: "draft" | "posted" | "void";
+}) {
+  if (data.status === undefined && data.postedAt === undefined) {
+    return true;
+  }
+
+  if (data.status === undefined || data.postedAt === undefined) {
+    return false;
+  }
+
+  return data.status === "posted"
+    ? data.postedAt !== null
+    : data.postedAt === null;
+}
+
+export const transactionSchema = transactionBaseSchema.refine(
+  hasConsistentPostingState,
+  {
+    message: "status and postedAt must be updated together and remain consistent",
+    path: ["postedAt"],
+  }
+);
+
+export const transactionSchemaUpdate = transactionBaseSchema.partial().refine(
+  hasConsistentPostingState,
+  {
+    message: "status and postedAt must be updated together and remain consistent",
+    path: ["postedAt"],
+  }
+);
 
 export const transactionDetailSchema = z.object({
   id: z.string(),
   date: z.coerce.date(),
   memo: z.string().nullable().optional(),
-  isPosted: z.boolean(),
   postedAt: z.coerce.date().nullable().optional(),
   referenceNumber: z.string().nullable().optional(),
   source: z.string().nullable().optional(),
@@ -28,13 +58,18 @@ export const transactionDetailSchema = z.object({
       z.object({
         id: z.number(),
         accountId: z.number(),
-        debit: z.number(),
-        credit: z.number(),
-        description: z.string().optional(),
-        glAccount: z.object({
+        amount: decimalStringSchema,
+        description: z.string(),
+        memo: z.string().nullable().optional(),
+        departmentId: z.number().nullable().optional(),
+        invoiceId: z.number().nullable().optional(),
+        transactionId: z.string().nullable().optional(),
+        type: z.enum(["debit", "credit"]).nullable().optional(),
+        account: z.object({
           id: z.number(),
           name: z.string(),
           accountNumber: z.string(),
+          type: z.enum(["asset", "liability", "equity", "revenue", "expense"]),
         }),
       })
     )
@@ -46,7 +81,6 @@ export const transactionListSchema = z.array(
     id: z.string(),
     date: z.coerce.date(),
     memo: z.string().nullable().optional(),
-    isPosted: z.boolean(),
     postedAt: z.coerce.date().nullable().optional(),
     referenceNumber: z.string().nullable().optional(),
     source: z.string().nullable().optional(),

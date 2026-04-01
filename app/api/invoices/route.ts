@@ -6,7 +6,8 @@ import {
   invoiceSchema,
 } from "@/schemas/invoices";
 import { getAllInvoices, createInvoice } from "@/lib/invoice";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -24,9 +25,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, invoiceSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const {
@@ -53,7 +52,8 @@ export async function POST(request: Request) {
       currency: currency ?? null,
     });
 
-    return NextResponse.json(parseSchemaOrThrow(invoice, invoiceDetailSchema));
+    const response = parseSchemaOrThrow(invoice, invoiceDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating invoice:", error);
     return handleApiError(error, "Failed to create invoice");

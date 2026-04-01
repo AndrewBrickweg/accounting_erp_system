@@ -1,22 +1,41 @@
 import { z } from "zod";
+import {
+  decimalStringSchema,
+  nonNegativeMoneySchema,
+} from "./common.ts";
 
-export const salesInvoiceSchema = z.object({
+const salesInvoiceBaseSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   invoiceDate: z.coerce.date(),
   dueDate: z.coerce.date(),
-  totalAmount: z.number().nonnegative("Total amount must be non-negative"),
+  totalAmount: nonNegativeMoneySchema("Total amount"),
   status: z.enum(["pending", "paid", "overdue"]),
   customerId: z.string().min(1, "Customer ID is required"),
   submittedById: z.string().min(1, "Submitted By ID is required"),
   currency: z.string().min(1, "Currency is required"),
-  taxAmount: z
-    .number()
-    .nonnegative("Tax amount must be non-negative")
-    .nullable()
-    .optional(),
+  taxAmount: nonNegativeMoneySchema("Tax amount").nullable().optional(),
 });
 
-export const salesInvoiceUpdateSchema = salesInvoiceSchema.partial();
+export const salesInvoiceSchema = salesInvoiceBaseSchema.refine(
+  ({ invoiceDate, dueDate }) => dueDate >= invoiceDate,
+  {
+    message: "Due date must be on or after invoice date",
+    path: ["dueDate"],
+  }
+);
+
+export const salesInvoiceUpdateSchema = salesInvoiceBaseSchema
+  .partial()
+  .refine(
+    ({ invoiceDate, dueDate }) =>
+      invoiceDate === undefined ||
+      dueDate === undefined ||
+      dueDate >= invoiceDate,
+    {
+      message: "Due date must be on or after invoice date",
+      path: ["dueDate"],
+    }
+  );
 
 const salesInvoiceCustomerSchema = z.object({
   id: z.string(),
@@ -41,7 +60,7 @@ export const salesInvoiceListSchema = z.array(
     invoiceNumber: z.string(),
     invoiceDate: z.coerce.date(),
     dueDate: z.coerce.date(),
-    totalAmount: z.number(),
+    totalAmount: decimalStringSchema,
     status: z.enum(["pending", "paid", "overdue"]),
     customerId: z.string(),
     submittedById: z.string(),
@@ -49,7 +68,7 @@ export const salesInvoiceListSchema = z.array(
     submittedBy: salesInvoiceSubmitterSchema,
     createdAt: z.coerce.date(),
     currency: z.string().nullable().optional(),
-    taxAmount: z.number().nullable().optional(),
+    taxAmount: decimalStringSchema.nullable().optional(),
     updatedAt: z.coerce.date(),
   })
 );
@@ -59,7 +78,7 @@ export const salesInvoiceDetailSchema = z.object({
   invoiceNumber: z.string(),
   invoiceDate: z.coerce.date(),
   dueDate: z.coerce.date(),
-  totalAmount: z.number(),
+  totalAmount: decimalStringSchema,
   status: z.enum(["pending", "paid", "overdue"]),
   customerId: z.string(),
   customer: salesInvoiceCustomerSchema,
@@ -67,7 +86,7 @@ export const salesInvoiceDetailSchema = z.object({
   submittedBy: salesInvoiceSubmitterSchema,
   createdAt: z.coerce.date(),
   currency: z.string().nullable().optional(),
-  taxAmount: z.number().nullable().optional(),
+  taxAmount: decimalStringSchema.nullable().optional(),
   updatedAt: z.coerce.date(),
 });
 

@@ -11,9 +11,13 @@ import {
 import {
   getGlCodingById,
   updateGlCoding,
-  deleteGlCoding,
 } from "@/lib/gl-coding";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleBadRequest,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
 
 export async function GET(
   request: Request,
@@ -24,13 +28,13 @@ export async function GET(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const glCoding = await getGlCodingById(id);
 
     if (!glCoding) {
-      return handleError("GL Coding not found", 404);
+      return handleNotFound("GL Coding not found");
     }
 
     return NextResponse.json(parseSchemaOrThrow(glCoding, glCodingDetailSchema));
@@ -40,7 +44,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -49,16 +53,14 @@ export async function PUT(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const body = await request.json();
     const validation = validateSchema(body, glCodingUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedGlCoding = await updateGlCoding(id, validation.data!);
@@ -69,30 +71,5 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating GL Coding:", error);
     return handleApiError(error, "Failed to update GL coding");
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: rawId } = await params;
-    const id = parsePositiveIntId(rawId);
-
-    if (id === null) {
-      return handleError("Invalid id parameter", 400);
-    }
-
-    const deletedGlCoding = await deleteGlCoding(id);
-
-    if (!deletedGlCoding) {
-      return handleError("GL Coding not found", 404);
-    }
-
-    return NextResponse.json({ message: "GL Coding deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting GL Coding:", error);
-    return handleApiError(error, "Failed to delete GL coding");
   }
 }

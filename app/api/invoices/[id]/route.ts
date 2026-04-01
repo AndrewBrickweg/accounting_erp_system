@@ -5,8 +5,13 @@ import {
   validateSchema,
 } from "@/lib/validate";
 import { invoiceDetailSchema, invoiceUpdateSchema } from "@/schemas/invoices";
-import { getInvoiceById, updateInvoice, deleteInvoice } from "@/lib/invoice";
-import { handleApiError, handleError } from "@/lib/error";
+import { getInvoiceById, updateInvoice } from "@/lib/invoice";
+import {
+  handleApiError,
+  handleBadRequest,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
 
 export async function GET(
   request: Request,
@@ -21,13 +26,13 @@ export async function GET(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const invoice = await getInvoiceById(id);
 
     if (!invoice) {
-      return handleError("Invoice not found", 404);
+      return handleNotFound("Invoice not found");
     }
 
     return NextResponse.json(parseSchemaOrThrow(invoice, invoiceDetailSchema));
@@ -37,7 +42,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -46,16 +51,14 @@ export async function PUT(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const body = await request.json();
     const validation = validateSchema(body, invoiceUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedInvoice = await updateInvoice(id, validation.data!);
@@ -64,30 +67,5 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating invoice:", error);
     return handleApiError(error, "Failed to update invoice");
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: rawId } = await params;
-    const id = parsePositiveIntId(rawId);
-
-    if (id === null) {
-      return handleError("Invalid id parameter", 400);
-    }
-
-    const invoice = await deleteInvoice(id);
-
-    if (!invoice) {
-      return handleError("Invoice not found", 404);
-    }
-
-    return NextResponse.json({ message: "Invoice deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting invoice:", error);
-    return handleApiError(error, "Failed to delete invoice");
   }
 }

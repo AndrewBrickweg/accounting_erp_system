@@ -6,7 +6,8 @@ import {
   employeeSchema,
 } from "@/schemas/employees";
 import { getAllEmployees, createEmployee } from "@/lib/employee";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -25,9 +26,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, employeeSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
     const {
       firstName,
@@ -49,7 +48,8 @@ export async function POST(request: Request) {
       terminatedAt,
     });
 
-    return NextResponse.json(parseSchemaOrThrow(employee, employeeDetailSchema));
+    const response = parseSchemaOrThrow(employee, employeeDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating employee:", error);
     return handleApiError(error, "Failed to create employee");

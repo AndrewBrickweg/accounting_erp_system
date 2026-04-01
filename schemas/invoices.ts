@@ -1,10 +1,14 @@
 import { z } from "zod";
+import {
+  decimalStringSchema,
+  positiveMoneySchema,
+} from "./common.ts";
 
-export const invoiceSchema = z.object({
+const invoiceBaseSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   invoiceDate: z.coerce.date(),
   dueDate: z.coerce.date(),
-  totalAmount: z.number().positive("Total amount must be a positive number"),
+  totalAmount: positiveMoneySchema("Total amount"),
   status: z.enum(["draft", "sent", "paid", "overdue"]),
   vendorId: z.number().int().positive("Vendor ID must be a positive integer"),
   submittedById: z.string(),
@@ -15,7 +19,24 @@ export const invoiceSchema = z.object({
   currency: z.string().nullable().optional(),
 });
 
-export const invoiceUpdateSchema = invoiceSchema.partial();
+export const invoiceSchema = invoiceBaseSchema.refine(
+  ({ invoiceDate, dueDate }) => dueDate >= invoiceDate,
+  {
+    message: "Due date must be on or after invoice date",
+    path: ["dueDate"],
+  }
+);
+
+export const invoiceUpdateSchema = invoiceBaseSchema.partial().refine(
+  ({ invoiceDate, dueDate }) =>
+    invoiceDate === undefined ||
+    dueDate === undefined ||
+    dueDate >= invoiceDate,
+  {
+    message: "Due date must be on or after invoice date",
+    path: ["dueDate"],
+  }
+);
 
 export const invoiceListSchema = z.array(
   z.object({
@@ -23,7 +44,7 @@ export const invoiceListSchema = z.array(
     invoiceNumber: z.string(),
     invoiceDate: z.coerce.date(),
     dueDate: z.coerce.date(),
-    totalAmount: z.number(),
+    totalAmount: decimalStringSchema,
     status: z.enum(["draft", "sent", "paid", "overdue"]),
     vendorId: z.number(),
     submittedById: z.string(),
@@ -39,7 +60,7 @@ export const invoiceDetailSchema = z.object({
   invoiceNumber: z.string(),
   invoiceDate: z.coerce.date(),
   dueDate: z.coerce.date(),
-  totalAmount: z.number(),
+  totalAmount: decimalStringSchema,
   status: z.enum(["draft", "sent", "paid", "overdue"]),
   vendorId: z.number(),
   submittedById: z.string(),

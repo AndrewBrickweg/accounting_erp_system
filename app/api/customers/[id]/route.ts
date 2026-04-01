@@ -9,7 +9,12 @@ import {
   updateCustomer,
   deleteCustomer,
 } from "@/lib/customer";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
+import { noContent } from "@/lib/http";
 
 export async function GET(
   request: Request,
@@ -20,7 +25,7 @@ export async function GET(
     const customer = await getCustomerById(id);
 
     if (!customer) {
-      return handleError("Customer not found", 404);
+      return handleNotFound("Customer not found");
     }
 
     return NextResponse.json(parseSchemaOrThrow(customer, customerDetailSchema));
@@ -30,7 +35,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -40,9 +45,7 @@ export async function PUT(
     const validation = validateSchema(body, customerUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedCustomer = await updateCustomer(id, validation.data!);
@@ -62,11 +65,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const deletedCustomer = await deleteCustomer(id);
-
-    return NextResponse.json(
-      parseSchemaOrThrow(deletedCustomer, customerDetailSchema)
-    );
+    await deleteCustomer(id);
+    return noContent();
   } catch (error) {
     console.error("Error deleting customer:", error);
     return handleApiError(error, "Failed to delete customer");

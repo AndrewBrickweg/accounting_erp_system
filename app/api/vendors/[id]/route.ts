@@ -6,7 +6,13 @@ import {
 } from "@/lib/validate";
 import { vendorDetailSchema, vendorUpdateSchema } from "@/schemas/vendors";
 import { getVendorById, updateVendor, deleteVendor } from "@/lib/vendor";
-import { handleApiError, handleError } from "@/lib/error";
+import {
+  handleApiError,
+  handleBadRequest,
+  handleNotFound,
+  handleValidationError,
+} from "@/lib/error";
+import { noContent } from "@/lib/http";
 
 export async function GET(
   request: Request,
@@ -17,13 +23,13 @@ export async function GET(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const vendor = await getVendorById(id);
 
     if (!vendor) {
-      return handleError("Vendor not found", 404);
+      return handleNotFound("Vendor not found");
     }
 
     return NextResponse.json(parseSchemaOrThrow(vendor, vendorDetailSchema));
@@ -33,7 +39,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -42,16 +48,14 @@ export async function PUT(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
     const body = await request.json();
     const validation = validateSchema(body, vendorUpdateSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const updatedVendor = await updateVendor(id, validation.data!);
@@ -71,11 +75,11 @@ export async function DELETE(
     const id = parsePositiveIntId(rawId);
 
     if (id === null) {
-      return handleError("Invalid id parameter", 400);
+      return handleBadRequest("Invalid id parameter");
     }
 
-    const deletedVendor = await deleteVendor(id);
-    return NextResponse.json(parseSchemaOrThrow(deletedVendor, vendorDetailSchema));
+    await deleteVendor(id);
+    return noContent();
   } catch (error) {
     console.error("Error deleting vendor:", error);
     return handleApiError(error, "Failed to delete vendor");

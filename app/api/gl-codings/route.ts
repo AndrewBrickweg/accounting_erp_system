@@ -6,7 +6,8 @@ import {
   glCodingSchema,
 } from "@/schemas/gl-codings";
 import { getAllGlCodings, createGlCoding } from "@/lib/gl-coding";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -25,9 +26,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, glCodingSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
     const {
       accountId,
@@ -50,7 +49,8 @@ export async function POST(request: Request) {
       transactionId,
     });
 
-    return NextResponse.json(parseSchemaOrThrow(glCoding, glCodingDetailSchema));
+    const response = parseSchemaOrThrow(glCoding, glCodingDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating GL Coding:", error);
     return handleApiError(error, "Failed to create GL coding");

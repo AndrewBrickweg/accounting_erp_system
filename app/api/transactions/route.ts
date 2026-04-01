@@ -6,7 +6,8 @@ import {
   transactionSchema,
 } from "@/schemas/transactions";
 import { getAllTransactions, createTransaction } from "@/lib/transaction";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -27,9 +28,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, transactionSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const {
@@ -39,7 +38,6 @@ export async function POST(request: Request) {
       type,
       source,
       status,
-      isPosted,
       postedAt,
     } = validation.data!;
 
@@ -50,13 +48,11 @@ export async function POST(request: Request) {
       type,
       source,
       status,
-      isPosted,
       postedAt,
     });
 
-    return NextResponse.json(
-      parseSchemaOrThrow(transaction, transactionDetailSchema)
-    );
+    const response = parseSchemaOrThrow(transaction, transactionDetailSchema);
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating transaction:", error);
     return handleApiError(error, "Failed to create transaction");

@@ -6,7 +6,8 @@ import {
   salesInvoiceSchema,
 } from "@/schemas/sales-invoices";
 import { getAllSalesInvoices, createSalesInvoice } from "@/lib/sales-invoice";
-import { handleApiError, handleError } from "@/lib/error";
+import { handleApiError, handleValidationError } from "@/lib/error";
+import { createdJson } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -27,9 +28,7 @@ export async function POST(request: Request) {
     const validation = validateSchema(body, salesInvoiceSchema);
 
     if (!validation.success) {
-      return handleError("Validation failed", 400, {
-        errors: validation.errors,
-      });
+      return handleValidationError(validation.errors);
     }
 
     const {
@@ -55,9 +54,11 @@ export async function POST(request: Request) {
       taxAmount: validation.data?.taxAmount ?? null,
     });
 
-    return NextResponse.json(
-      parseSchemaOrThrow(salesInvoice, salesInvoiceDetailSchema)
+    const response = parseSchemaOrThrow(
+      salesInvoice,
+      salesInvoiceDetailSchema
     );
+    return createdJson(request, response.id, response);
   } catch (error) {
     console.error("Error creating sales invoice:", error);
     return handleApiError(error, "Failed to create sales invoice");

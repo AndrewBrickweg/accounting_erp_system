@@ -1,9 +1,13 @@
 import { z } from "zod";
+import {
+  decimalStringSchema,
+  nonNegativeMoneySchema,
+} from "./common.ts";
 
 export const glCodingSchema = z.object({
   accountId: z.number().int().positive("Account ID must be a positive integer"),
   description: z.string().min(1, "Description is required"),
-  amount: z.number().min(0, "Amount must be a non-negative number"),
+  amount: nonNegativeMoneySchema("Amount"),
   invoiceId: z.number().int().nullable().optional(),
   departmentId: z.number().int().nullable().optional(),
   memo: z.string().nullable().optional(),
@@ -18,7 +22,7 @@ export const glCodingListSchema = z.array(
     id: z.number(),
     accountId: z.number(),
     description: z.string(),
-    amount: z.number(),
+    amount: decimalStringSchema,
     invoiceId: z.number().nullable(),
     departmentId: z.number().nullable(),
     createdAt: z.coerce.date(),
@@ -33,7 +37,7 @@ export const glCodingDetailSchema = z.object({
   id: z.number(),
   accountId: z.number(),
   description: z.string(),
-  amount: z.number(),
+  amount: decimalStringSchema,
   invoiceId: z.number().nullable(),
   departmentId: z.number().nullable(),
   createdAt: z.coerce.date(),
