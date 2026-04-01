@@ -14,7 +14,7 @@ export async function getPaymentById(id: number) {
 }
 
 export async function createPayment(data: {
-  amountPaid: number;
+  amountPaid: string;
   paymentDate: Date;
   method: "credit_card" | "ach" | "wire" | "check";
   invoiceId: number;
@@ -26,7 +26,7 @@ export async function createPayment(data: {
 export async function updatePayment(
   id: number,
   data: {
-    amountPaid?: number;
+    amountPaid?: string;
     paymentDate?: Date;
     method?: "credit_card" | "ach" | "wire" | "check";
     invoiceId?: number;

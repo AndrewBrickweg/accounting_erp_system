@@ -16,12 +16,12 @@ export async function createSalesInvoice(data: {
   invoiceNumber: string;
   invoiceDate: Date;
   dueDate: Date;
-  totalAmount: number;
+  totalAmount: string;
   status: "pending" | "paid" | "overdue";
   customerId: string;
   submittedById: string;
   currency: string;
-  taxAmount?: number | null;
+  taxAmount?: string | null;
 }) {
   return await prisma.salesInvoice.create({
     data,
@@ -35,12 +35,12 @@ export async function updateSalesInvoice(
     invoiceNumber?: string;
     invoiceDate?: Date;
     dueDate?: Date;
-    totalAmount?: number;
+    totalAmount?: string;
     status?: "pending" | "paid" | "overdue";
     customerId?: string;
     submittedById?: string;
     currency?: string;
-    taxAmount?: number | null;
+    taxAmount?: string | null;
   }
 ) {
   return await prisma.salesInvoice.update({

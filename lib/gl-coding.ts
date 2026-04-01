@@ -13,7 +13,7 @@ export async function getGlCodingById(id: number) {
 export async function createGlCoding(data: {
   accountId: number;
   description: string;
-  amount: number;
+  amount: string;
   invoiceId?: number | null;
   departmentId?: number | null;
   memo?: string | null;
@@ -28,7 +28,7 @@ export async function updateGlCoding(
   data: {
     accountId?: number;
     description?: string;
-    amount?: number;
+    amount?: string;
     invoiceId?: number | null;
     departmentId?: number | null;
     memo?: string | null;

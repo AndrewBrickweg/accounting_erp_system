@@ -21,7 +21,7 @@ export async function createInvoice(data: {
   invoiceNumber: string;
   invoiceDate: Date;
   dueDate: Date;
-  totalAmount: number;
+  totalAmount: string;
   status: "draft" | "sent" | "paid" | "overdue";
   vendorId: number;
   submittedById: string;
@@ -37,7 +37,7 @@ export async function updateInvoice(
     invoiceNumber?: string;
     invoiceDate?: Date;
     dueDate?: Date;
-    totalAmount?: number;
+    totalAmount?: string;
     status?: "draft" | "sent" | "paid" | "overdue";
     vendorId?: number;
     submittedById?: string;

@@ -9,20 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model Department {
-  id           Int         @id @default(autoincrement())
-  name         String
-  manager      Employee?   @relation("DepartmentManager", fields: [managerId], references: [id])
-  managerId    String?        @unique
-  code         String      @unique
-  employees    Employee[]  @relation("DepartmentEmployees")
-  invoices     Invoice[]
-  glCodings    GLCoding[]
-  journalLines JournalLine[]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -31,250 +20,50 @@ enum Role {
   staff
 }
 
-
-model Employee {
-  id           String @id @default(uuid())
-  firstName    String
-  lastName     String
-  email        String     @unique
-  role         Role
-  isActive     Boolean @default(true)
-  terminatedAt DateTime?
-  department   Department @relation("DepartmentEmployees", fields: [departmentId], references: [id])
-  departmentId Int
-
-  manages      Department? @relation("DepartmentManager")
-  manager      Employee?  @relation("EmployeeManager", fields: [managerId], references: [id])
-  managerId    String?
-
-  subordinates Employee[] @relation("EmployeeManager")
-
-  uploadedDocuments        Document[]           @relation("UploadedBy")
-  submittedInvoices        Invoice[]            @relation("SubmittedBy")
-  payments                 Payment[]
-  approvals                InvoiceApprovalLog[]
-  journalEntries           JournalEntry[]
-  completedReconciliations BankReconciliation[] @relation("CompletedBy")
-
-  submittedSalesInvoices SalesInvoice[] @relation("SubmittedSalesInvoices")
+enum InvoiceStatus {
+  draft
+  sent
+  paid
+  overdue
 }
 
-
-model Vendor {
-  id          Int       @id @default(autoincrement())
-  name        String
-  contactName String
-  email       String
-  phone       String
-  address     Address? @relation("VendorAddress")
-  isActive    Boolean @default(true)
-  invoices    Invoice[]
+enum GLCodingType {
+  debit
+  credit
 }
 
-model Invoice {
-  id            Int                  @id @default(autoincrement())
-  invoiceNumber String               @unique
-  invoiceDate   DateTime
-  dueDate       DateTime
-  totalAmount   Float
-  status        String
-  vendor        Vendor               @relation(fields: [vendorId], references: [id])
-  vendorId      Int
-  submittedBy   Employee             @relation("SubmittedBy", fields: [submittedById], references: [id])
-  submittedById String
-  department    Department           @relation(fields: [departmentId], references: [id])
-  departmentId  Int
-  glCodings     GLCoding[]
-  documents     Document[]
-  payments      Payment[]
-  approvals     InvoiceApprovalLog[]
-  currency      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
+enum TransactionType {
+  journal
+  payment
+  receipt
+  transfer
 }
 
-model GLCoding {
-  id            Int             @id @default(autoincrement())
-  account       ChartOfAccount @relation(fields: [accountId], references: [id])
-  accountId     Int
-  description   String
-  amount        Float
-  invoice       Invoice?         @relation(fields: [invoiceId], references: [id])
-  invoiceId     Int?
-  memo         String?
-  type         String? // Optional: "DR" or "CR"
-  department    Department?      @relation(fields: [departmentId], references: [id])
-  departmentId  Int?
-  transaction   Transaction? @relation(fields: [transactionId], references: [id])
-  transactionId String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+enum TransactionStatus {
+  draft
+  posted
+  void
 }
 
-model Transaction {
-  id              String @id @default(uuid())
-  date            DateTime @default(now())
-  memo            String?
-  referenceNumber String?
-  type            String
-  source          String?
-  status          String @default("draft")
-  isPosted        Boolean @default(false)
-  postedAt        DateTime?
-
-  entries GLCoding[]
+enum PaymentMethod {
+  credit_card
+  ach
+  wire
+  check
 }
 
-model Document {
-  id           String      @id @default(uuid())
-  fileName     String
-  type         String? // Enum preferred: INVOICE, RECEIPT, REPORT
-  fileSize     Int?
-  fileUrl      String
-  uploadDate   DateTime
-  invoice      Invoice? @relation(fields: [invoiceId], references: [id])
-  invoiceId    Int?
-  uploadedBy   Employee @relation("UploadedBy", fields: [uploadedById], references: [id])
-  uploadedById String
+enum ChartOfAccountType {
+  asset
+  liability
+  equity
+  revenue
+  expense
 }
 
-model Payment {
-  id          Int      @id @default(autoincrement())
-  amountPaid  Float
-  paymentDate DateTime
-  method      String
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
-  invoiceId   Int
-  paidBy      Employee @relation(fields: [paidById], references: [id])
-  paidById    String
-}
-
-model InvoiceApprovalLog {
-  id            Int      @id @default(autoincrement())
-  approvalOrder Int
-  approvalDate  DateTime
-  status        String
-  comments      String?
-  createdAt     DateTime @default(now())
-  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
-  invoiceId     Int
-  approvedBy    Employee @relation(fields: [approvedById], references: [id])
-  approvedById  String
-}
-
-model ChartOfAccount {
-  id            Int           @id @default(autoincrement())
-  accountNumber String        @unique
-  name          String
-  type          String // Asset, Liability, Equity, Revenue, Expense
-  isActive      Boolean       @default(true)
-  glCodings     GLCoding[]
-  journalLines  JournalLine[]
-}
-
-model JournalEntry {
-  id          Int               @id @default(autoincrement())
-  entryDate   DateTime
-  memo        String?
-  referenceNumber String?
-  source          String?
-  createdBy   Employee          @relation(fields: [createdById], references: [id])
-  createdById String
-  lines       JournalLine[]
-  period      AccountingPeriod? @relation(fields: [periodId], references: [id])
-  periodId    Int?
-}
-
-model JournalLine {
-  id             Int             @id @default(autoincrement())
-  journalEntry   JournalEntry    @relation(fields: [journalEntryId], references: [id])
-  journalEntryId Int
-  account        ChartOfAccount @relation(fields: [accountId], references: [id])
-  accountId      Int
-  department     Department      @relation(fields: [departmentId], references: [id])
-  departmentId   Int
-  amount         Float
-  isDebit        Boolean
-}
-
-model Customer {
-  id            String            @id @default(uuid())
-  companyName   String?
-  firstName     String?
-  lastName      String?
-  email         String         @unique
-  phone         String?        @db.VarChar(20)
-  address       Address?       @relation("CustomerAddress")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  salesInvoices SalesInvoice[]
-}
-
-model Address {
-  id         Int       @id @default(autoincrement())
-  street     String?
-  city       String?
-  state      String?
-  zip        String?
-  country    String?
-  vendor     Vendor?   @relation("VendorAddress", fields: [vendorId], references: [id])
-  vendorId   Int?      @unique
-
-  customer   Customer? @relation("CustomerAddress", fields: [customerId], references: [id])
-  customerId String?   @unique  
-}
-
-
-model SalesInvoice {
-  id            Int      @id @default(autoincrement())
-  invoiceNumber String   @unique
-  invoiceDate   DateTime
-  dueDate       DateTime
-  totalAmount   Float
-  currency   String?
-  taxAmount  Float?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  status        String
-  customer      Customer @relation(fields: [customerId], references: [id])
-  customerId    String
-
-  submittedBy   Employee @relation("SubmittedSalesInvoices", fields: [submittedById], references: [id])
-  submittedById String
-}
-
-model BankAccount {
-  id              Int                  @id @default(autoincrement())
-  name            String
-  type            String?
-  isPrimary       Boolean @default(false)
-  accountNumber   String
-  bankName        String
-  balance         Float
-  transactions    BankTransaction[]
-  reconciliations BankReconciliation[]
-}
-
-model BankReconciliation {
-  id                 Int                 @id @default(autoincrement())
-  bankAccount        BankAccount         @relation(fields: [bankAccountId], references: [id])
-  bankAccountId      Int
-  statementStartDate DateTime
-  statementEndDate   DateTime
-  openingBalance     Float
-  reconciledBalance  Float
-  difference         Float?
-  status             ReconciliationStatus
-  notes              String?
-  completedBy        Employee?           @relation("CompletedBy", fields: [completedById], references: [id])
-  completedById      String?
-  completedAt        DateTime?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-
-  transactions       ReconciledTransaction[]
+enum SalesInvoiceStatus {
+  pending
+  paid
+  overdue
 }
 
 enum ReconciliationStatus {
@@ -286,36 +75,298 @@ enum ReconciliationStatus {
   ERROR
 }
 
+model Department {
+  id           Int         @id @default(autoincrement())
+  name         String
+  manager      Employee?   @relation("DepartmentManager", fields: [managerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  managerId    String?     @unique
+  code         String      @unique
+  employees    Employee[]  @relation("DepartmentEmployees")
+  invoices     Invoice[]
+  glCodings    GLCoding[]
+  journalLines JournalLine[]
+}
+
+model Employee {
+  id                       String               @id @default(uuid())
+  firstName                String
+  lastName                 String
+  email                    String               @unique
+  role                     Role
+  isActive                 Boolean              @default(true)
+  terminatedAt             DateTime?
+  department               Department           @relation("DepartmentEmployees", fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  departmentId             Int
+  manages                  Department?          @relation("DepartmentManager")
+  manager                  Employee?            @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  managerId                String?
+  subordinates             Employee[]           @relation("EmployeeManager")
+  uploadedDocuments        Document[]           @relation("UploadedBy")
+  submittedInvoices        Invoice[]            @relation("SubmittedBy")
+  payments                 Payment[]
+  approvals                InvoiceApprovalLog[]
+  journalEntries           JournalEntry[]
+  completedReconciliations BankReconciliation[] @relation("CompletedBy")
+  submittedSalesInvoices   SalesInvoice[]       @relation("SubmittedSalesInvoices")
+
+  @@index([departmentId])
+  @@index([managerId])
+}
+
+model Vendor {
+  id          Int       @id @default(autoincrement())
+  name        String
+  contactName String
+  email       String
+  phone       String
+  address     Address?  @relation("VendorAddress")
+  isActive    Boolean   @default(true)
+  invoices    Invoice[]
+}
+
+model Invoice {
+  id            Int           @id @default(autoincrement())
+  invoiceNumber String        @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  totalAmount   Decimal       @db.Decimal(18, 2)
+  status        InvoiceStatus
+  vendor        Vendor        @relation(fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  vendorId      Int
+  submittedBy   Employee      @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  submittedById String
+  department    Department    @relation(fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  departmentId  Int
+  glCodings     GLCoding[]
+  documents     Document[]
+  payments      Payment[]
+  approvals     InvoiceApprovalLog[]
+  currency      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([vendorId])
+  @@index([submittedById])
+  @@index([departmentId])
+  @@index([status, dueDate])
+}
+
+model GLCoding {
+  id            Int              @id @default(autoincrement())
+  account       ChartOfAccount   @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  accountId     Int
+  description   String
+  amount        Decimal          @db.Decimal(18, 2)
+  invoice       Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  invoiceId     Int?
+  memo          String?
+  type          GLCodingType?
+  department    Department?      @relation(fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  departmentId  Int?
+  transaction   Transaction?     @relation(fields: [transactionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  transactionId String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([accountId])
+  @@index([invoiceId])
+  @@index([departmentId])
+  @@index([transactionId])
+}
+
+model Transaction {
+  id              String            @id @default(uuid())
+  date            DateTime          @default(now())
+  memo            String?
+  referenceNumber String?
+  type            TransactionType
+  source          String?
+  status          TransactionStatus @default(draft)
+  postedAt        DateTime?
+  entries         GLCoding[]
+
+  @@index([status, date])
+}
+
+model Document {
+  id           String    @id @default(uuid())
+  fileName     String
+  type         String?
+  fileSize     Int?
+  fileUrl      String
+  uploadDate   DateTime
+  invoice      Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  invoiceId    Int?
+  uploadedBy   Employee  @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  uploadedById String
+}
+
+model Payment {
+  id          Int           @id @default(autoincrement())
+  amountPaid  Decimal       @db.Decimal(18, 2)
+  paymentDate DateTime
+  method      PaymentMethod
+  invoice     Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  invoiceId   Int
+  paidBy      Employee      @relation(fields: [paidById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  paidById    String
+
+  @@index([paidById])
+  @@index([invoiceId, paymentDate])
+}
+
+model InvoiceApprovalLog {
+  id            Int      @id @default(autoincrement())
+  approvalOrder Int
+  approvalDate  DateTime
+  status        String
+  comments      String?
+  createdAt     DateTime @default(now())
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  invoiceId     Int
+  approvedBy    Employee @relation(fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  approvedById  String
+}
+
+model ChartOfAccount {
+  id            Int                @id @default(autoincrement())
+  accountNumber String             @unique
+  name          String
+  type          ChartOfAccountType
+  isActive      Boolean            @default(true)
+  glCodings     GLCoding[]
+  journalLines  JournalLine[]
+}
+
+model JournalEntry {
+  id              Int               @id @default(autoincrement())
+  entryDate       DateTime
+  memo            String?
+  referenceNumber String?
+  source          String?
+  createdBy       Employee          @relation(fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdById     String
+  lines           JournalLine[]
+  period          AccountingPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  periodId        Int?
+}
+
+model JournalLine {
+  id             Int            @id @default(autoincrement())
+  journalEntry   JournalEntry   @relation(fields: [journalEntryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  journalEntryId Int
+  account        ChartOfAccount @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  accountId      Int
+  department     Department     @relation(fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  departmentId   Int
+  amount         Float
+  isDebit        Boolean
+}
+
+model Customer {
+  id            String         @id @default(uuid())
+  companyName   String?
+  firstName     String?
+  lastName      String?
+  email         String         @unique
+  phone         String?        @db.VarChar(20)
+  address       Address?       @relation("CustomerAddress")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  salesInvoices SalesInvoice[]
+}
+
+model Address {
+  id         Int       @id @default(autoincrement())
+  street     String?
+  city       String?
+  state      String?
+  zip        String?
+  country    String?
+  vendor     Vendor?   @relation("VendorAddress", fields: [vendorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  vendorId   Int?      @unique
+  customer   Customer? @relation("CustomerAddress", fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  customerId String?   @unique
+}
+
+model SalesInvoice {
+  id            Int                @id @default(autoincrement())
+  invoiceNumber String             @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  totalAmount   Decimal            @db.Decimal(18, 2)
+  currency      String?
+  taxAmount     Decimal?           @db.Decimal(18, 2)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  status        SalesInvoiceStatus
+  customer      Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  customerId    String
+  submittedBy   Employee           @relation("SubmittedSalesInvoices", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  submittedById String
+
+  @@index([customerId])
+  @@index([submittedById])
+  @@index([status, dueDate])
+}
+
+model BankAccount {
+  id              Int                  @id @default(autoincrement())
+  name            String
+  type            String?
+  isPrimary       Boolean              @default(false)
+  accountNumber   String
+  bankName        String
+  balance         Float
+  transactions    BankTransaction[]
+  reconciliations BankReconciliation[]
+}
+
+model BankReconciliation {
+  id                 Int                     @id @default(autoincrement())
+  bankAccount        BankAccount             @relation(fields: [bankAccountId], references: [id])
+  bankAccountId      Int
+  statementStartDate DateTime
+  statementEndDate   DateTime
+  openingBalance     Float
+  reconciledBalance  Float
+  difference         Float?
+  status             ReconciliationStatus
+  notes              String?
+  completedBy        Employee?               @relation("CompletedBy", fields: [completedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  completedById      String?
+  completedAt        DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  transactions       ReconciledTransaction[]
+}
 
 model BankTransaction {
-  id              Int                      @id @default(autoincrement())
-  bankAccount     BankAccount              @relation(fields: [bankAccountId], references: [id])
+  id              Int                     @id @default(autoincrement())
+  bankAccount     BankAccount             @relation(fields: [bankAccountId], references: [id])
   bankAccountId   Int
   amount          Float
   date            DateTime
   description     String
   reference       String?
-  createdAt       DateTime                 @default(now())
-
+  createdAt       DateTime                @default(now())
   reconciliations ReconciledTransaction[]
 }
 
 model ReconciledTransaction {
-  id                   Int                 @id @default(autoincrement())
-  reconciliation       BankReconciliation @relation(fields: [reconciliationId], references: [id])
-  reconciliationId     Int
-  transaction          BankTransaction    @relation(fields: [transactionId], references: [id])
-  transactionId        Int
-  isMatched            Boolean            @default(false)
-  matchedAt            DateTime?
-  notes                String?
+  id               Int                @id @default(autoincrement())
+  reconciliation   BankReconciliation @relation(fields: [reconciliationId], references: [id])
+  reconciliationId Int
+  transaction      BankTransaction    @relation(fields: [transactionId], references: [id])
+  transactionId    Int
+  isMatched        Boolean            @default(false)
+  matchedAt        DateTime?
+  notes            String?
 }
-
-
 
 model AccountingPeriod {
   id             Int            @id @default(autoincrement())
-  periodName     String // e.g., "Jul 2025"
+  periodName     String
   startDate      DateTime
   endDate        DateTime
   isClosed       Boolean        @default(false)
