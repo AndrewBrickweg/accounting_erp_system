@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test --experimental-strip-types --experimental-specifier-resolution=node tests/api-contract.test.mts",
+    "test:http": "npm run build && node --test --experimental-strip-types --experimental-specifier-resolution=node tests/http-validation.test.mts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
